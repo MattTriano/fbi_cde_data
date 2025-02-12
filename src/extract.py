@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from typing import Optional
+import warnings
 
 import pandas as pd
 import requests
@@ -48,4 +49,7 @@ class CDEAPI:
             county_df = pd.json_normalize(oris)
             county_df["county_key"] = county
             county_oris.append(county_df)
-        return pd.concat(county_oris, ignore_index=True)
+        with warnings.catch_warnings():
+            # TODO: pandas 2.1.0 has a FutureWarning for concatenating DataFrames with Null entries
+            warnings.filterwarnings("ignore", category=FutureWarning)
+            return pd.concat([df for df in county_oris if not df.empty], ignore_index=True)

@@ -7,6 +7,24 @@ import duckdb
 import pandas as pd
 
 
+class QueryError(Exception):
+    """Raised when a query execution fails."""
+
+    pass
+
+
+class IngestError(Exception):
+    """Raised when data ingestion fails."""
+
+    pass
+
+
+class InvalidNameError(Exception):
+    """Raised when an invalid duckdb resource name is used."""
+
+    pass
+
+
 class DBWrapper:
     def __init__(self, db_path: Path):
         self.db_path = db_path
@@ -87,6 +105,8 @@ class DBWrapper:
                options: ['fail', 'replace', 'append', 'append-new', 'upsert']
                If 'upsert' or 'append-new', `primary_keys` must be provided.
         """
+        if schema_name not in self.list_schemas():
+            self.create_schema(schema_name)
         if primary_keys is not None:
             if isinstance(primary_keys, str):
                 primary_keys = list(primary_keys)
@@ -149,21 +169,3 @@ class DBWrapper:
 
     def vacuum(self) -> None:
         self.query("VACUUM")
-
-
-class QueryError(Exception):
-    """Raised when a query execution fails."""
-
-    pass
-
-
-class IngestError(Exception):
-    """Raised when data ingestion fails."""
-
-    pass
-
-
-class InvalidNameError(Exception):
-    """Raised when an invalid duckdb resource name is used."""
-
-    pass
