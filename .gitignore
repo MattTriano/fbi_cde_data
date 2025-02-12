@@ -1,5 +1,6 @@
 # Python-generated files
 __pycache__/
+.ipynb_checkpoints/
 *.py[oc]
 build/
 dist/
@@ -14,3 +15,5 @@ wheels/
 
 !data/master/.gitkeep
 data/master/
+!data/databases/.gitkeep
+data/databases/

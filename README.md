@@ -4,9 +4,22 @@ This repo develops utilities for collecting and exploring FBI NIBRS/UCR data, pa
 
 API data collection will be implemented first, and the master dataset parser will be implemented second and used to validate the API data.
 
+## Setup
+
+I'm using [uv](https://docs.astral.sh/uv/) for this project, but the core non-dev dependencies are pretty standard and mature (python built-ins, `pandas`/`geopandas`, `requests`, `duckdb`). If you have `uv` [installed](https://docs.astral.sh/uv/getting-started/installation/#standalone-installer), you can recreate my env by running `uv sync` (after cloning the repo and `cd`ing into it), and it will create an env using the dependencies specified in the `pyproject.toml`.
+
+This project requires an FBI CDE API key to work. You can get one for free by entering your name and email into this [request form](https://api.data.gov/signup/) and then you'll immediately receive an API key. This project expects this key to either be in an environment variable named `CDE_API_KEY` or in a `.env` file with key-name `CDE_API_KEY`.
+
 ## Usage
 
-I'm using [uv](https://docs.astral.sh/uv/) for this project, but the core non-dev dependencies are pretty standard and mature (python built-ins, `pandas`/`geopandas`, `requests`, `pyarrow`, `duckdb`). If you have `uv` installed, you can recreate my env by running `uv sync`, and it will create an env using the dependencies specified in the `pyproject.toml`.
+At present, this project collects ORI data for the states listed [here] in the `<project_root>/src/elt.py` file and ingests it into a DuckDB database file (at `<project_root>/data/databases/cde_dwh.duckdb`).
+
+To run the pipeline from the command line, activate your env and run the `<project_root>/src/elt.py` script.
+
+```console
+source .venv/bin/activate. # or .venv\Scripts\activate on windows
+python src/elt.py
+```
 
 # Source Data
 
@@ -14,7 +27,7 @@ I'm using [uv](https://docs.astral.sh/uv/) for this project, but the core non-de
 
 The NIBRS API is documented [here](https://cde.ucr.cjis.gov/LATEST/webapp/#/pages/docApi).
 
-To download data from the FBI CDE API, you need an API key. You can get one for free by entering your name and email into this [request form](https://api.data.gov/signup/) and then you'll immediately receive an API key. This project expects this key to either be in an environment variable named `CDE_API_KEY` or in a `.env` file with key-name `CDE_API_KEY`.
+To download data from the FBI CDE API, you need an API key. The process for getting one takes about a minute and is described above in the **Setup** section.
 
 ## NIBRS Master Extracts
 

@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 
 from extract import CDEAPI
@@ -64,7 +65,10 @@ class NIBRSPipeline:
         self.update_oris = update_oris
         self.cde_api = self.get_cde_api()
         self.db_manager = self.get_db_manager()
-        # self.run_pipeline()
+
+    def run_pipeline(self) -> None:
+        self.db_manager.create_schema("nibrs_raw")
+        self.extract_and_load_all_oris()
 
     def get_cde_api(self) -> CDEAPI:
         return CDEAPI(dotenv_path=self.project_root.joinpath(".env"))
@@ -72,10 +76,6 @@ class NIBRSPipeline:
     def get_db_manager(self) -> DuckDBManager:
         db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
         return DuckDBManager(db_path=db_path)
-
-    def run_pipeline(self) -> None:
-        self.db_manager.create_schema("nibrs_raw")
-        self.extract_and_load_all_oris()
 
     def extract_and_load_all_oris(self, state_abbrs: tuple[str] = state_abbrs) -> None:
         tables_in_schema = self.db_manager.list_tables("nibrs_raw")
@@ -96,3 +96,26 @@ class NIBRSPipeline:
                 primary_keys=["ori"],
                 if_exists="upsert",
             )
+
+
+def main(project_root: Path, update_oris: bool) -> None:
+    print(project_root)
+    print(f"update_oris: {update_oris}")
+    pipeline = NIBRSPipeline(project_root, update_oris)
+    pipeline.run_pipeline()
+
+
+if __name__ == "__main__":
+    print(f"__file__: {__file__}")
+    parser = argparse.ArgumentParser(
+        description="Runs a pipeline to collect NIBRS data and load it into a duckdb database."
+    )
+    parser.add_argument(
+        "--project_root_dir",
+        type=str,
+        default=str(Path(__file__).parent.parent),
+        help="Path to the project's root dir",
+    )
+    parser.add_argument("--update_oris", action="store_true", help="Forces redownload of ORI data")
+    args = parser.parse_args()
+    main(project_root=Path(args.project_root_dir), update_oris=args.update_oris)
