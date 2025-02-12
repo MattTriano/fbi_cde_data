@@ -25,7 +25,7 @@ class InvalidNameError(Exception):
     pass
 
 
-class DBWrapper:
+class DuckDBManager:
     def __init__(self, db_path: Path):
         self.db_path = db_path
 
@@ -75,7 +75,7 @@ class DBWrapper:
         return self._tables(schema_name)["table_name"].unique().tolist()
 
     def _standardize_name(self, name: str) -> str:
-        std_name = re.sub(r"[^a-z0-9_]", "", "_".join(name.lower().split()))
+        std_name = re.sub(r"[^a-z0-9_]", "", "_".join(name.replace("-", " ").lower().split()))
         self._validate_name(std_name)
         return std_name
 
@@ -117,52 +117,63 @@ class DBWrapper:
                 raise ValueError(
                     f"Primary key column name(s) are required if if_exists = '{if_exists}'."
                 )
+        schema = self._standardize_name(schema_name)
+        table = self._standardize_name(table_name)
+        table_exists = table in self.list_tables(schema)
+
+        if table_exists and if_exists == "fail":
+            raise ValueError(f"""Table "{table}" already exists in schema "{schema}".""")
+
         try:
-            schema = self._standardize_name(schema_name)
-            table = self._standardize_name(table_name)
-            table_exists = table in self.list_tables(schema)
-            if table_exists:
-                if if_exists == "replace":
-                    self.query(f"DROP TABLE IF EXISTS {schema}.{table}")
-                elif if_exists == "fail":
-                    raise ValueError(f"""Table "{table}" already exists in schema "{schema}".""")
             with self._get_connection() as conn:
                 conn.register("temp_df", df)
-                if not table_exists:
+
+                if table_exists:
+                    if if_exists == "replace":
+                        self.query(f"DROP TABLE IF EXISTS {schema}.{table}", conn)
+                        create_query = f"""
+                            CREATE TABLE {schema}.{table}
+                            AS SELECT * FROM temp_df
+                        """
+                        self.query(create_query, conn)
+                    else:
+                        insert_query = f"""
+                            INSERT INTO {schema}.{table}
+                            SELECT * FROM temp_df
+                        """
+                        if if_exists in ["upsert", "append-new"]:
+                            if if_exists == "append-new":
+                                key_conditions = " AND ".join(
+                                    [f"target.{key} = temp_df.{key}" for key in primary_keys]
+                                )
+                                where_clause = f"""
+                                    WHERE NOT EXISTS (
+                                        SELECT 1 FROM {schema}.{table} AS target
+                                        WHERE {key_conditions}
+                                    )"""
+                                insert_query = insert_query + where_clause
+                            elif if_exists == "upsert":
+                                key_conditions = " AND ".join(
+                                    [
+                                        f"{schema}.{table}.{key} = temp_df.{key}"
+                                        for key in primary_keys
+                                    ]
+                                )
+                                delete_query = f"""
+                                    DELETE FROM {schema}.{table}
+                                    WHERE EXISTS (
+                                        SELECT 1 FROM temp_df
+                                        WHERE {key_conditions}
+                                    )
+                                """
+                                self.query(delete_query, conn)
+                        self.query(insert_query, conn)
+                else:
                     create_query = f"""
                         CREATE TABLE IF NOT EXISTS {schema}.{table}
                         AS SELECT * FROM temp_df
                     """
                     self.query(create_query, conn)
-                else:
-                    insert_query = f"""
-                        INSERT INTO {schema}.{table}
-                        SELECT * FROM temp_df
-                    """
-                    if if_exists in ["upsert", "append-new"]:
-                        if if_exists == "append-new":
-                            key_conditions = " AND ".join(
-                                [f"target.{key} = temp_df.{key}" for key in primary_keys]
-                            )
-                            where_clause = f"""
-                                WHERE NOT EXISTS (
-                                    SELECT 1 FROM {schema}.{table} AS target
-                                    WHERE {key_conditions}
-                                )"""
-                            insert_query = insert_query + where_clause
-                        elif if_exists == "upsert":
-                            key_conditions = " AND ".join(
-                                [f"{schema}.{table}.{key} = temp_df.{key}" for key in primary_keys]
-                            )
-                            delete_query = f"""
-                                DELETE FROM {schema}.{table}
-                                WHERE EXISTS (
-                                    SELECT 1 FROM temp_df
-                                    WHERE {key_conditions}
-                                )
-                            """
-                            self.query(delete_query, conn)
-                    self.query(insert_query, conn)
                 conn.unregister("temp_df")
         except Exception as e:
             raise IngestError(f"Failed to ingest DataFrame: {str(e)}")
