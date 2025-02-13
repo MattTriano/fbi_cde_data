@@ -21,6 +21,15 @@ source .venv/bin/activate. # or .venv\Scripts\activate on windows
 python src/elt.py
 ```
 
+### Query interface
+
+Run this command to open the Streamlit database querying interface. The console output will include three URLs, click the one that's appropriate for your situation (or try all three if you're unsure).
+
+```console
+streamlit run apps/query_interface.py
+```
+
+
 # Source Data
 
 ## NIBRS API
