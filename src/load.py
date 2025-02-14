@@ -26,15 +26,16 @@ class InvalidNameError(Exception):
 
 
 class DuckDBManager:
-    def __init__(self, db_path: Path):
+    def __init__(self, db_path: Path, read_only: bool = False):
         self.db_path = db_path
+        self.read_only = read_only
 
     @contextmanager
     def _get_connection(self):
         """Context manager for handling database connections."""
         conn = None
         try:
-            conn = duckdb.connect(self.db_path)
+            conn = duckdb.connect(self.db_path, read_only=self.read_only)
             yield conn
         finally:
             if conn:
