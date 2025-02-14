@@ -1,7 +1,5 @@
 from pathlib import Path
-import re
 import sys
-from typing import Union
 
 import pandas as pd
 import streamlit as st
@@ -11,6 +9,7 @@ DB_PATH = PROJECT_ROOT.joinpath("data", "databases", "cde_dwh.duckdb")
 sys.path.append(str(PROJECT_ROOT.joinpath("src")))
 
 from load import DuckDBManager  # noqa: E402
+from app_utils import display_query, enforce_query_limit  # noqa: E402
 
 ####################################################
 ################# Helper Functions #################
@@ -39,32 +38,11 @@ def get_db_manager():
     return DuckDBManager(DB_PATH, read_only=True)
 
 
-def display_query(query: Union[list[str], str]):
-    if isinstance(query, list):
-        st.code("\n".join(query), language="sql")
-    elif isinstance(query, str):
-        st.code(query, language="sql")
-    else:
-        raise TypeError(f"The query must be provided as a str or list of strs. Received {query}")
-
-
 def run_sample_query(query: list[str]) -> pd.DataFrame:
     if not isinstance(query, list):
         raise TypeError(f"Sample queries must be provided as a list of strs. Received {query}")
     results = db_manager.query("\n".join(query))
     return results
-
-
-def enforce_limit(query: str, max_rows: int = MAX_ROWS) -> str:
-    limit_pattern = re.compile(r"LIMIT\s+(\d+)", re.IGNORECASE)
-    match = limit_pattern.search(query)
-    if match:
-        current_limit = int(match.group(1))
-        if current_limit > max_rows:
-            query = limit_pattern.sub(f"LIMIT {max_rows}", query)
-    else:
-        query = f"{query}\nLIMIT {max_rows}"
-    return query
 
 
 def run_main_query(query: str) -> pd.DataFrame:
@@ -77,7 +55,7 @@ def run_main_query(query: str) -> pd.DataFrame:
         st.write(
             f"Query would return {total_rows} rows, which exceeds this app's {MAX_ROWS} row limit"
         )
-        query = enforce_limit(query)
+        query = enforce_query_limit(query, max_rows=MAX_ROWS)
     st.write("Executed query:")
     display_query(query)
     with st.spinner("Executing query..."):
@@ -93,11 +71,12 @@ def run_main_query(query: str) -> pd.DataFrame:
             mime="text/csv",
         )
 
+
 ####################################################
 #################### App Layout ####################
 ####################################################
 
-st.set_page_config(page_title="DuckDB Query Interface", layout="wide")
+st.set_page_config(page_title="FBI CDE Database Query Interface", layout="wide")
 
 st.title("FBI CDE Database Query Interface")
 st.markdown("""
@@ -108,7 +87,7 @@ Write your query in the text area below and click 'Execute Query' to see the res
 db_manager = get_db_manager()
 
 main_query = st.text_area(
-    "Enter your SQL query:", height=150, placeholder="SELECT * FROM nibrs_raw.ori LIMIT 5;"
+    "Enter your SQL query:", height=150, placeholder="select *\nfrom nibrs_raw.ori\nlimit 5"
 )
 
 
