@@ -1,4 +1,22 @@
-from app_utils import enforce_query_limit
+import pytest
+
+from app_utils import display_query, enforce_query_limit, has_unescaped_newline, match_sql_case
+
+
+def test_display_query_str_input(mocker):
+    # This doesn't really test the behavior; it just tests that stremlit's .code() method is called
+    mock_code = mocker.patch("streamlit.code")
+
+    display_query("SELECT * FROM table")
+    mock_code.assert_called_once_with("SELECT * FROM table", language="sql")
+
+
+def test_display_query_list_input(mocker):
+    # This doesn't really test the behavior; it just tests that stremlit's .code() method is called
+    mock_code = mocker.patch("streamlit.code")
+
+    display_query(["SELECT *", "FROM table"])
+    mock_code.assert_called_once_with("SELECT *\nFROM table", language="sql")
 
 
 def test_enforce_query_limit_adds_limit():
@@ -91,3 +109,40 @@ def test_enforce_query_limit_multiline_query():
     expected_query = "SELECT *\nFROM a_schema.a_table\nLIMIT 2330"
     limited_query = enforce_query_limit(original_query, 2330)
     assert limited_query == expected_query
+
+
+@pytest.mark.parametrize(
+    "query, keyword, expected",
+    [
+        ("SELECT * FROM a_table", "limit", "LIMIT"),
+        ("select * from a_table", "limit", "limit"),
+        ("Select * From a_table", "limit", "Limit"),
+        ("SELECT * from a_table where a_col = 1", "limit", "limit"),
+    ],
+)
+def test_match_sql_case(query, keyword, expected):
+    assert match_sql_case(query, keyword) == expected
+
+
+@pytest.mark.parametrize(
+    "query, expected",
+    [
+        ("SELECT * FROM a_table", False),
+        ("SELECT *\nFROM a_table", True),
+        ("SELECT * FROM a_table WHERE name = 'John\nDoe'", False),  # Newline inside quotes
+    ],
+)
+def test_has_unescaped_newline(query, expected):
+    assert has_unescaped_newline(query) == expected
+
+
+@pytest.mark.parametrize(
+    "query, max_rows, expected",
+    [
+        ("SELECT * FROM a_table", 1000, "SELECT * FROM a_table LIMIT 1000"),
+        ("SELECT * FROM a_table LIMIT 5000", 1000, "SELECT * FROM a_table LIMIT 1000"),
+        ("SELECT *\nFROM a_table", 500, "SELECT *\nFROM a_table\nLIMIT 500"),
+    ],
+)
+def test_enforce_query_limit(query, max_rows, expected):
+    assert enforce_query_limit(query, max_rows) == expected
