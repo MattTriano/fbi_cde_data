@@ -71,14 +71,14 @@ class CDEAPI:
             raise ValueError(
                 "Incorrect format. Resubmit the given month-year string in mm-yyyy format."
             )
-        else:
-            today = pd.Timestamp.now(tz="utc").floor("D")
-            year = int(to_from[3:])
-            month = int(to_from[:2])
-            if year > today.year or (year == today.year and month >= today.month):
-                raise ValueError(
-                    "Future month-year string given. Data from the future not yet available."
-                )
+        # else:
+        #     today = pd.Timestamp.now(tz="utc").floor("D")
+        # year = int(to_from[3:])
+        # month = int(to_from[:2])
+        # if year > today.year or (year == today.year and month >= today.month):
+        #     raise ValueError(
+        #         "Future month-year string given. Data from the future not yet available."
+        #     )
 
     def _fmt_nibrs_agency_ori_offense_call(
         self, ori: str, type: str, from_date: str, to_date: str, offense: str
@@ -100,7 +100,7 @@ class CDEAPI:
         if pd.to_datetime(from_date) > pd.to_datetime(to_date):
             raise ValueError("The `to` date cannot predate the 'from' date.")
         api_call = (
-            f"{self.base_url}/nibrs/agency/{{ori}}/{offense}?type={type}&"
+            f"{self.base_url}/nibrs/agency/{ori}/{offense}?type={type}&"
             f"from={from_date}&to={to_date}&ori={ori}"
         )
         return api_call
