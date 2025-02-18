@@ -1,4 +1,6 @@
 import argparse
+from functools import cached_property
+import hashlib
 from pathlib import Path
 
 from extract import CDEAPI
@@ -57,6 +59,61 @@ state_abbrs = (
     "WI",
     "WY",
 )
+
+
+class NIBRSMasterFilePipeline:
+    def __init__(self, project_root: Path, nibrs_year: int):
+        self.project_root = project_root
+        self.db_manager = self.get_db_manager()
+
+    def setup(self):
+        self.setup_schemas()
+
+    def setup_schemas(self):
+        self.db_manager.create_schema("nibrs_raw")
+        self.db_manager.create_schema("nibrs_metadata")
+
+    # def setup_nibrs_metadata_table(self):
+
+
+class NIBRSMasterFileIngester:
+    def __init__(self, project_root: Path, nibrs_year: int):
+        self.project_root = project_root
+        self.nibrs_year = nibrs_year
+        self.assert_nibrs_year_data_available()
+        self.db_manager = self.get_db_manager()
+
+    @cached_property
+    def file_name(self) -> str:
+        return f"nibrs-{str(self.nibrs_year)}.zip"
+
+    @cached_property
+    def data_dir(self) -> Path:
+        return self.project_root.joinpath("data", "master")
+
+    @cached_property
+    def file_path(self) -> Path:
+        return self.data_dir.joinpath(self.file_name)
+
+    def get_db_manager(self) -> DuckDBManager:
+        db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
+        return DuckDBManager(db_path=db_path)
+
+    def assert_nibrs_year_data_available(self):
+        if not self.file_path.is_file():
+            raise FileNotFoundError(
+                f"No file named {self.file_name} found in directory {self.data_dir}."
+            )
+
+    @cached_property
+    def calculate_file_hash(self) -> str:
+        sha256_hash = hashlib.sha256()
+        with open(self.file_path, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+
+    # def nibrs_year_already_ingested(self):
 
 
 class NIBRSPipeline:
