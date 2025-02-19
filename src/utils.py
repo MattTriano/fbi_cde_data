@@ -1,4 +1,5 @@
 import logging
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 
@@ -17,9 +18,7 @@ def setup_logging():
     console_handler.setFormatter(formatter)
 
     log_file = log_dir.joinpath("app.log")
-    file_handler = logging.handlers.RotatingFileHandler(
-        log_file, maxBytes=5 * 1024 * 1024, backupCount=3
-    )
+    file_handler = RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=3)
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
 

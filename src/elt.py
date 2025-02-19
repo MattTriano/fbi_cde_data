@@ -13,61 +13,7 @@ from extract import CDEAPI
 from load import DuckDBManager
 from utils import setup_logging
 from parsers import nibrs
-
-
-state_abbrs = (
-    "AL",
-    "AK",
-    "AZ",
-    "AR",
-    "CA",
-    "CO",
-    "CT",
-    "DE",
-    "DC",
-    "FL",
-    "GA",
-    "HI",
-    "ID",
-    "IL",
-    "IN",
-    "IA",
-    "KS",
-    "KY",
-    "LA",
-    "ME",
-    "MD",
-    "MA",
-    "MI",
-    "MN",
-    "MS",
-    "MO",
-    "MT",
-    "NE",
-    "NV",
-    "NH",
-    "NJ",
-    "NM",
-    "NY",
-    "NC",
-    "ND",
-    "OH",
-    "OK",
-    "OR",
-    "PA",
-    "RI",
-    "SC",
-    "SD",
-    "TN",
-    "TX",
-    "UT",
-    "VT",
-    "VA",
-    "WA",
-    "WV",
-    "WI",
-    "WY",
-)
+from parsers.constants import STATE_CODES
 
 
 class NIBRSMasterFilePipeline:
@@ -265,9 +211,12 @@ class NIBRSPipeline:
         db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
         return DuckDBManager(db_path=db_path)
 
-    def extract_and_load_all_oris(self, state_abbrs: tuple[str] = state_abbrs) -> None:
+    def extract_and_load_all_oris(
+        self, state_abbrs: tuple[str] = tuple(STATE_CODES.values())
+    ) -> None:
         tables_in_schema = self.db_manager.list_tables("nibrs_raw")
-        check_states = state_abbrs
+        non_state_codes = set(("AS", "CZ", "GM", "PR", "VI"))
+        check_states = tuple(set(state_abbrs).difference(non_state_codes))
         if "ori" in tables_in_schema:
             ingested_states = self.db_manager.query("""
                 select distinct state_abbr
@@ -287,6 +236,7 @@ class NIBRSPipeline:
 
 
 def main(project_root: Path, update_oris: bool) -> None:
+    setup_logging()
     print(project_root)
     print(f"update_oris: {update_oris}")
     pipeline = NIBRSPipeline(project_root, update_oris)
