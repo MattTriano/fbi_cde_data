@@ -2,6 +2,7 @@ import argparse
 from functools import cached_property
 import hashlib
 import io
+import logging
 from pathlib import Path
 from typing import Generator
 import zipfile
@@ -10,6 +11,7 @@ import zipfile_deflate64
 
 from extract import CDEAPI
 from load import DuckDBManager
+from utils import setup_logging
 from parsers import nibrs
 
 
@@ -69,12 +71,18 @@ state_abbrs = (
 
 
 class NIBRSMasterFilePipeline:
-    def __init__(self, project_root: Path, nibrs_year: int):
+    def __init__(self, project_root: Path):
         self.project_root = project_root
         self.db_manager = self.get_db_manager()
+        setup_logging()
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def setup(self):
         self.setup_schemas()
+
+    def get_db_manager(self) -> DuckDBManager:
+        db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
+        return DuckDBManager(db_path=db_path)
 
     def setup_schemas(self):
         self.db_manager.create_schema("nibrs_raw")
@@ -106,19 +114,53 @@ class NIBRSMasterFilePipeline:
             )
         """)
 
-    def _create_segment_01_table(self) -> None:
-        int_col_lines = "nibrs_year::INTEGER"
-        str_cols = list(nibrs.Segment01Parser(line=" " * 300).record.keys())
-        str_col_lines = "::VARCHAR,\n\t\t\t\t".join(str_cols)
-        create_query = f"""
-            CREATE TABLE IF NOT EXISTS nibrs_raw.administrative AS (
-                {int_col_lines},
-                {str_col_lines}
-            )
-        """
-        self.db_manager.query(create_query)
+    def _format_create_table_stmt_from_parser(
+        self, nibrs_parser, table_name: str, schema_name: str = "nibrs_raw"
+    ) -> str:
+        int_col_lines_str = "    nibrs_year INTEGER,"
+        str_cols = list(nibrs_parser(line=" " * 300).record.keys())
+        str_col_lines_str = ",\n".join([f"    {col} VARCHAR" for col in str_cols])
+        create_stmt_lines = [
+            f"CREATE TABLE IF NOT EXISTS {schema_name}.{table_name} (",
+            int_col_lines_str,
+            str_col_lines_str,
+            ")",
+        ]
+        create_stmt = "\n".join(create_stmt_lines)
+        return create_stmt
 
-    # def setup_segment_tables(self) -> None:
+    def _create_table_from_parser(
+        self, nibrs_parser, table_name: str, schema_name: str = "nibrs_raw", verbose: bool = True
+    ) -> None:
+        table_exists = table_name in self.db_manager.list_tables(schema_name)
+        if table_exists:
+            self.logger.info(f"Table {table_name} already exists.")
+        else:
+            create_stmt = self._format_create_table_stmt_from_parser(
+                nibrs_parser, table_name, schema_name
+            )
+            self.logger.info(
+                f"Creating table {schema_name}.{table_name} with this statement:\n\n{create_stmt}"
+            )
+            result = self.db_manager.query(create_stmt)
+            self.logger.info(f"Successfully created table {schema_name}.{table_name}")
+            self.logger.info(f"Result: {result}")
+
+    def setup_segment_tables(self) -> None:
+        self._create_table_from_parser(nibrs.SegmentBHParser, "batch_header")
+        self._create_table_from_parser(nibrs.SegmentB1Parser, "batch_header_p1")
+        self._create_table_from_parser(nibrs.SegmentB2Parser, "batch_header_p2")
+        self._create_table_from_parser(nibrs.SegmentB3Parser, "batch_header_p3")
+        self._create_table_from_parser(nibrs.Segment01Parser, "administrative")
+        self._create_table_from_parser(nibrs.Segment02Parser, "offense")
+        self._create_table_from_parser(nibrs.Segment03Parser, "property")
+        self._create_table_from_parser(nibrs.Segment04Parser, "victim")
+        self._create_table_from_parser(nibrs.Segment05Parser, "offender")
+        self._create_table_from_parser(nibrs.Segment06Parser, "arrestee")
+        self._create_table_from_parser(nibrs.Segment07Parser, "arrest")
+        self._create_table_from_parser(nibrs.SegmentW1Parser, "window_ex_clear")
+        self._create_table_from_parser(nibrs.SegmentW3Parser, "window_property")
+        self._create_table_from_parser(nibrs.SegmentW6Parser, "window_arrestee")
 
 
 class NIBRSMasterFileIngester:

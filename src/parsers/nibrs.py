@@ -149,10 +149,10 @@ class SegmentBHParser:
         b3_parser = SegmentB3Parser(self.line, offset=176)
 
         record = {}
-        shared_fields = ("segment", "state_code", "ori", "incident_no")
-        record.update({{k}: v for k, v in b1_parser.record.items()})
-        record.update({{k}: v for k, v in b2_parser.record.items() if k not in shared_fields})
-        record.update({{k}: v for k, v in b3_parser.record.items() if k not in shared_fields})
+        shared_fields = ("nibrs_year", "segment", "state_code", "ori", "incident_no")
+        record.update({k: v for k, v in b1_parser.record.items()})
+        record.update({k: v for k, v in b2_parser.record.items() if k not in shared_fields})
+        record.update({k: v for k, v in b3_parser.record.items() if k not in shared_fields})
         return record
 
 
