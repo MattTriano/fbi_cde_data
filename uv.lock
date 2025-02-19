@@ -370,6 +370,7 @@ dependencies = [
     { name = "requests" },
     { name = "ruff" },
     { name = "streamlit" },
+    { name = "zipfile-deflate64" },
 ]
 
 [package.metadata]
@@ -382,6 +383,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32.3" },
     { name = "ruff", specifier = ">=0.9.6" },
     { name = "streamlit", specifier = ">=1.42.0" },
+    { name = "zipfile-deflate64", specifier = ">=0.2.0" },
 ]
 
 [[package]]
@@ -1959,3 +1961,9 @@ sdist = { url = "https://files.pythonhosted.org/packages/56/fc/238c424fd7f4ebb25
 wheels = [
     { url = "https://files.pythonhosted.org/packages/21/02/88b65cc394961a60c43c70517066b6b679738caf78506a5da7b88ffcb643/widgetsnbextension-4.0.13-py3-none-any.whl", hash = "sha256:74b2692e8500525cc38c2b877236ba51d34541e6385eeed5aec15a70f88a6c71", size = 2335872 },
 ]
+
+[[package]]
+name = "zipfile-deflate64"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/03/1b/f397f821b48156ee94c5ca7ad82dc5cdb73cbcbc4377b9c1b21556f3ce8c/zipfile-deflate64-0.2.0.tar.gz", hash = "sha256:875a3299de102edf1c17f8cafcc528b1ca80b62dc4814b9cb56867ec59fbfd18", size = 62896 }

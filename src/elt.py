@@ -1,10 +1,17 @@
 import argparse
 from functools import cached_property
 import hashlib
+import io
 from pathlib import Path
+from typing import Generator
+import zipfile
+
+import zipfile_deflate64
 
 from extract import CDEAPI
 from load import DuckDBManager
+from parsers import nibrs
+
 
 state_abbrs = (
     "AL",
@@ -73,7 +80,45 @@ class NIBRSMasterFilePipeline:
         self.db_manager.create_schema("nibrs_raw")
         self.db_manager.create_schema("nibrs_metadata")
 
-    # def setup_nibrs_metadata_table(self):
+    def setup_nibrs_metadata_table(self) -> None:
+        self.db_manager.query(
+            """CREATE SEQUENCE IF NOT EXISTS seq_nibrs_master_ingestion_id START 1"""
+        )
+        self.db_manager.query("""
+            CREATE TABLE IF NOT EXISTS nibrs_metadata.nibrs_master_metadata (
+                id BIGINT PRIMARY KEY DEFAULT nextval('seq_nibrs_master_ingestion_id'),
+                year INT NOT NULL,
+                segment_bh_count INT NOT NULL,
+                segment_b1_count INT NOT NULL,
+                segment_b2_count INT NOT NULL,
+                segment_b3_count INT NOT NULL,
+                segment_01_count INT NOT NULL,
+                segment_02_count INT NOT NULL,
+                segment_03_count INT NOT NULL,
+                segment_04_count INT NOT NULL,
+                segment_05_count INT NOT NULL,
+                segment_06_count INT NOT NULL,
+                segment_07_count INT NOT NULL,
+                segment_w1_count INT NOT NULL,
+                segment_w3_count INT NOT NULL,
+                segment_w6_count INT NOT NULL,
+                ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+    def _create_segment_01_table(self) -> None:
+        int_col_lines = "nibrs_year::INTEGER"
+        str_cols = list(nibrs.Segment01Parser(line=" " * 300).record.keys())
+        str_col_lines = "::VARCHAR,\n\t\t\t\t".join(str_cols)
+        create_query = f"""
+            CREATE TABLE IF NOT EXISTS nibrs_raw.administrative AS (
+                {int_col_lines},
+                {str_col_lines}
+            )
+        """
+        self.db_manager.query(create_query)
+
+    # def setup_segment_tables(self) -> None:
 
 
 class NIBRSMasterFileIngester:
@@ -82,6 +127,7 @@ class NIBRSMasterFileIngester:
         self.nibrs_year = nibrs_year
         self.assert_nibrs_year_data_available()
         self.db_manager = self.get_db_manager()
+        self.segment_counter = self.init_segment_counter()
 
     @cached_property
     def file_name(self) -> str:
@@ -95,6 +141,24 @@ class NIBRSMasterFileIngester:
     def file_path(self) -> Path:
         return self.data_dir.joinpath(self.file_name)
 
+    def init_segment_counter(self) -> dict[str, str]:
+        return {
+            "BH": 0,
+            "B1": 0,
+            "B2": 0,
+            "B3": 0,
+            "01": 0,
+            "02": 0,
+            "03": 0,
+            "04": 0,
+            "05": 0,
+            "06": 0,
+            "07": 0,
+            "W1": 0,
+            "W3": 0,
+            "W6": 0,
+        }
+
     def get_db_manager(self) -> DuckDBManager:
         db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
         return DuckDBManager(db_path=db_path)
@@ -106,12 +170,37 @@ class NIBRSMasterFileIngester:
             )
 
     @cached_property
-    def calculate_file_hash(self) -> str:
+    def file_hash(self) -> str:
         sha256_hash = hashlib.sha256()
         with open(self.file_path, "rb") as f:
             for byte_block in iter(lambda: f.read(4096), b""):
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
+
+    def get_archive_compression(self) -> str:
+        with zipfile.ZipFile(self.file_path, "r") as zf:
+            file_info = zf.infolist()
+            file_info = sorted(file_info, key=lambda x: x.file_size, reverse=True)
+            compression_type = zipfile.compressor_names.get(file_info[0].compress_type, "unknown")
+            return compression_type
+
+    def get_file_lines(self, encoding: str = "latin1") -> Generator[str, None, None]:
+        compression_type = self.get_archive_compression()
+        if compression_type == "deflate64":
+            unzip_context_mgr = zipfile.ZipFile
+        else:
+            unzip_context_mgr = zipfile_deflate64.ZipFile
+        with unzip_context_mgr(self.file_path, "r") as zf:
+            file_info = zf.infolist()
+            file_info = sorted(file_info, key=lambda x: x.file_size, reverse=True)
+            if len(file_info) == 0:
+                raise ValueError(f"ZIP file {self.file_path} is empty")
+            file_name = file_info[0].filename
+            with zf.open(file_name, "r") as f:
+                text_file = io.TextIOWrapper(f, encoding=encoding)
+                for line in text_file:
+                    line = line.replace("\x00", " ")
+                    yield line
 
     # def nibrs_year_already_ingested(self):
 
