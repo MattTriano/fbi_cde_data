@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Generator
 import zipfile
 
+from tqdm import tqdm
 import zipfile_deflate64
 
 from extract import CDEAPI
@@ -171,13 +172,16 @@ class NIBRSMasterFileIngester:
         "W6": nibrs.SegmentW6Parser,
     }
 
-    def __init__(self, project_root: Path, nibrs_year: int):
+    def __init__(self, project_root: Path, nibrs_year: int, batch_size: int = 1000):
         self.project_root = project_root
         self.nibrs_year = nibrs_year
+        self.batch_size = batch_size
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.assert_nibrs_year_data_available()
         self.db_manager = self.get_db_manager()
         self.check_that_database_is_set_up()
         self.segment_counter = self.init_segment_counter()
+        self.segment_batches = self.init_segment_batches()
         # self.run_ingestion()
 
     def run_ingestion(self):
@@ -199,22 +203,11 @@ class NIBRSMasterFileIngester:
         return self.data_dir.joinpath(self.file_name)
 
     def init_segment_counter(self) -> dict[str, str]:
-        return {
-            "BH": 0,
-            "B1": 0,
-            "B2": 0,
-            "B3": 0,
-            "01": 0,
-            "02": 0,
-            "03": 0,
-            "04": 0,
-            "05": 0,
-            "06": 0,
-            "07": 0,
-            "W1": 0,
-            "W3": 0,
-            "W6": 0,
-        }
+        return {segment_code: 0 for segment_code in self.nibrs_segments.keys()}
+
+    def init_segment_batches(self) -> dict[str, list[dict[str, str]]]:
+        """Creates holders for batches of records. Valid only in single-threaded flow."""
+        return {segment_code: [] for segment_code in self.nibrs_segments.keys()}
 
     def get_db_manager(self) -> DuckDBManager:
         db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
@@ -250,6 +243,12 @@ class NIBRSMasterFileIngester:
             file_info = sorted(file_info, key=lambda x: x.file_size, reverse=True)
             compression_type = zipfile.compressor_names.get(file_info[0].compress_type, "unknown")
             return compression_type
+
+    def get_total_file_line_count(self) -> int:
+        self.logger.info("Starting to count lines in zipped file (could take 15 to 25 seconds)")
+        line_count = sum(1 for _ in self.get_file_lines())
+        self.logger.info(f"Finished counting.\nLines in zipped file: {line_count}")
+        return line_count
 
     def get_file_lines(self, encoding: str = "latin1") -> Generator[str, None, None]:
         compression_type = self.get_archive_compression()
@@ -313,22 +312,85 @@ class NIBRSMasterFileIngester:
                 )
         return True
 
-    def ingest_all_lines(self) -> None:
-        for line in self.get_file_lines():
-            segment_code = line[0:2]
-            segment_name = self.nibrs_segments.get(segment_code, None)
-            parser_func = self.nibrs_segment_parsers.get(segment_code, None)
-            if parser_func is None or segment_name is None:
-                raise KeyError(f"Line has an invalid segment code: {segment_code}. Line: {line}")
-            parser = parser_func(line)
-            record = parser.record
-            insert_stmt = self._format_record_insert_stmt(table_name=segment_name, record=record)
+    def _process_batch(self, segment_code: str, segment_name: str) -> None:
+        if not self.segment_batches[segment_code]:
+            return
+
+        batch = self.segment_batches[segment_code]
+        if batch:
+            insert_stmt = self._format_batch_insert_stmt(segment_name, batch)
+            records_in_batch = len(batch)
             _ = self.db_manager.query(insert_stmt)
-            self.segment_counter[segment_code] += 1
+            self.segment_counter[segment_code] += records_in_batch
+            self.segment_batches[segment_code] = []
+
+    def ingest_all_lines(self) -> None:
+        total_lines = self.get_total_file_line_count()
+        unhandled_lines = []
+        with tqdm(total=total_lines, desc=f"Ingesting NIBRS {self.nibrs_year} data") as pbar:
+            for line in self.get_file_lines():
+                segment_code = line[0:2]
+                segment_name = self.nibrs_segments.get(segment_code, None)
+                parser_func = self.nibrs_segment_parsers.get(segment_code, None)
+                if parser_func is None or segment_name is None:
+                    pbar.update(1)
+                    unhandled_lines.append(line)
+                    continue
+                try:
+                    parser = parser_func(line)
+                    record = parser.record
+                    self.segment_batches[segment_code].append(record)
+                    if len(self.segment_batches[segment_code]) >= self.batch_size:
+                        self._process_batch(segment_code, segment_name)
+                    pbar.set_postfix(
+                        year=self.nibrs_year,
+                        total_records=sum(self.segment_counter.values()),
+                        refresh=False,
+                    )
+                    pbar.update(1)
+                except Exception as e:
+                    unhandled_lines.append(line)
+                    pbar.write(f"Error processing line with segment {segment_code}: {str(e)}")
+                    pbar.update(1)
+
+            for segment_code, batch in self.segment_batches.items():
+                if batch:
+                    segment_name = self.nibrs_segments[segment_code]
+                    self._process_batch(segment_code, segment_name)
+        if len(unhandled_lines) > 0:
+            self.logger.info(
+                "Some lines couldn't be processed and require inspection.\n"
+                f"Unhandled lines: {len(unhandled_lines)}"
+            )
+            for unhandled_line in unhandled_lines:
+                self.logger.info(f"line: '{unhandled_line}'")
+
+    def _format_batch_insert_stmt(self, table_name: str, records: list[dict[str, str]]) -> str:
+        # if not records:
+        #     return ""
+        column_names = ["nibrs_year", *list(records[0].keys())]
+        column_names_str = ", ".join(column_names)
+        values_parts = []
+        for record in records:
+            escaped_values = [str(self.nibrs_year)]
+            for column in column_names[1:]:
+                value = record.get(column, "")
+                escaped_value = str(value).replace("'", "''")
+                escaped_values.append(f"'{escaped_value}'")
+            values_str = "(" + ", ".join(escaped_values) + ")"
+            values_parts.append(values_str)
+        all_values_str = ",\n    ".join(values_parts)
+        insert_stmt = (
+            f"INSERT INTO nibrs_raw.{table_name}\n"
+            f"    ({column_names_str})\n"
+            "VALUES\n"
+            f"    {all_values_str};"
+        )
+        return insert_stmt
 
     def _format_record_insert_stmt(self, table_name: str, record: dict[str, str]) -> str:
-        column_names = list(record.keys())
-        column_values = list(record.values())
+        column_names = ["nibrs_year", *list(record.keys())]
+        column_values = [str(self.nibrs_year), *list(record.values())]
         column_names_str = ", ".join(column_names)
         column_values_str = "'" + "', '".join(column_values) + "'"
         insert_stmt = (
