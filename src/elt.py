@@ -178,7 +178,7 @@ class NIBRSMasterFileIngester:
         self.db_manager = self.get_db_manager()
         self.check_that_database_is_set_up()
         self.segment_counter = self.init_segment_counter()
-        self.run_ingestion()
+        # self.run_ingestion()
 
     def run_ingestion(self):
         already_ingested = self.nibrs_year_already_ingested()
@@ -226,7 +226,7 @@ class NIBRSMasterFileIngester:
         if "nibrs_metadata" not in self.db_manager.list_schemas():
             raise SchemaMissingError("Schema nibrs_metadata must be created.")
         if ("nibrs_master_metadata" not in nibrs_metadata_tables) or (
-            any([ns not in nibrs_raw_tables for ns in self.nibrs_segments])
+            any([ns not in nibrs_raw_tables for ns in self.nibrs_segments.values()])
         ):
             raise TableMissingError("Required tables must be created.")
 
@@ -318,7 +318,7 @@ class NIBRSMasterFileIngester:
             segment_code = line[0:2]
             segment_name = self.nibrs_segments.get(segment_code, None)
             parser_func = self.nibrs_segment_parsers.get(segment_code, None)
-            if parser is None or segment_name is None:
+            if parser_func is None or segment_name is None:
                 raise KeyError(f"Line has an invalid segment code: {segment_code}. Line: {line}")
             parser = parser_func(line)
             record = parser.record
