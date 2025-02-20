@@ -184,6 +184,7 @@ class NIBRSMasterFileIngester:
         already_ingested = self.nibrs_year_already_ingested()
         if not already_ingested:
             self.ingest_all_lines()
+            # ToDo: Implement _format_metadata_insert_stmt() and call it here
 
     @cached_property
     def file_name(self) -> str:
@@ -315,15 +316,28 @@ class NIBRSMasterFileIngester:
     def ingest_all_lines(self) -> None:
         for line in self.get_file_lines():
             segment_code = line[0:2]
-            parser = self.nibrs_segment_parsers.get(segment_code, None)
-            if parser is None:
+            segment_name = self.nibrs_segments.get(segment_code, None)
+            parser_func = self.nibrs_segment_parsers.get(segment_code, None)
+            if parser is None or segment_name is None:
                 raise KeyError(f"Line has an invalid segment code: {segment_code}. Line: {line}")
-            parsed_record = parser(line)
-            # ToDo: implement ingest_line() to ingest lines, and then increment the appropriate
-            #       count in self.segment_counter.
+            parser = parser_func(line)
+            record = parser.record
+            insert_stmt = self._format_record_insert_stmt(table_name=segment_name, record=record)
+            _ = self.db_manager.query(insert_stmt)
+            self.segment_counter[segment_code] += 1
 
-    def ingest_line(self, line: str) -> None:
-        pass
+    def _format_record_insert_stmt(self, table_name: str, record: dict[str, str]) -> str:
+        column_names = list(record.keys())
+        column_values = list(record.values())
+        column_names_str = ", ".join(column_names)
+        column_values_str = "'" + "', '".join(column_values) + "'"
+        insert_stmt = (
+            f"INSERT INTO nibrs_raw.{table_name}\n"
+            f"    ({column_names_str})\n"
+            "VALUES\n"
+            f"    ({column_values_str});"
+        )
+        return insert_stmt
 
 
 class NIBRSPipeline:
