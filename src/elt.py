@@ -16,15 +16,41 @@ from parsers import nibrs
 from parsers.constants import STATE_CODES
 
 
+class SchemaMissingError(Exception):
+    """Raised when a not-yet-created duckdb schema is referenced."""
+
+    pass
+
+
+class TableMissingError(Exception):
+    """Raised when a not-yet-created duckdb table is referenced."""
+
+    pass
+
+
+class SourceDataChangedError(Exception):
+    """Raised when a static data file has changed."""
+
+    pass
+
+
+class DatabaseRecordCountError(Exception):
+    """Raised when the database has an unexpected number of records."""
+
+    pass
+
+
 class NIBRSMasterFilePipeline:
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.db_manager = self.get_db_manager()
         setup_logging()
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.setup()
 
     def setup(self):
         self.setup_schemas()
+        self.setup_nibrs_metadata_table()
 
     def get_db_manager(self) -> DuckDBManager:
         db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
@@ -38,7 +64,7 @@ class NIBRSMasterFilePipeline:
         self.db_manager.query(
             """CREATE SEQUENCE IF NOT EXISTS seq_nibrs_master_ingestion_id START 1"""
         )
-        self.db_manager.query("""
+        _ = self.db_manager.query("""
             CREATE TABLE IF NOT EXISTS nibrs_metadata.nibrs_master_metadata (
                 id BIGINT PRIMARY KEY DEFAULT nextval('seq_nibrs_master_ingestion_id'),
                 year INT NOT NULL,
@@ -56,9 +82,11 @@ class NIBRSMasterFilePipeline:
                 segment_w1_count INT NOT NULL,
                 segment_w3_count INT NOT NULL,
                 segment_w6_count INT NOT NULL,
+                file_hash VARCHAR,
                 ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        self.logger.info("Successfully created metadata table.")
 
     def _format_create_table_stmt_from_parser(
         self, nibrs_parser, table_name: str, schema_name: str = "nibrs_raw"
@@ -110,12 +138,52 @@ class NIBRSMasterFilePipeline:
 
 
 class NIBRSMasterFileIngester:
+    nibrs_segments = {
+        "BH": "batch_header",
+        "B1": "batch_header_p1",
+        "B2": "batch_header_p2",
+        "B3": "batch_header_p3",
+        "01": "administrative",
+        "02": "offense",
+        "03": "property",
+        "04": "victim",
+        "05": "offender",
+        "06": "arrestee",
+        "07": "arrest",
+        "W1": "window_ex_clear",
+        "W3": "window_property",
+        "W6": "window_arrestee",
+    }
+    nibrs_segment_parsers = {
+        "BH": nibrs.SegmentBHParser,
+        "B1": nibrs.SegmentB1Parser,
+        "B2": nibrs.SegmentB2Parser,
+        "B3": nibrs.SegmentB3Parser,
+        "01": nibrs.Segment01Parser,
+        "02": nibrs.Segment02Parser,
+        "03": nibrs.Segment03Parser,
+        "04": nibrs.Segment04Parser,
+        "05": nibrs.Segment05Parser,
+        "06": nibrs.Segment06Parser,
+        "07": nibrs.Segment07Parser,
+        "W1": nibrs.SegmentW1Parser,
+        "W3": nibrs.SegmentW3Parser,
+        "W6": nibrs.SegmentW6Parser,
+    }
+
     def __init__(self, project_root: Path, nibrs_year: int):
         self.project_root = project_root
         self.nibrs_year = nibrs_year
         self.assert_nibrs_year_data_available()
         self.db_manager = self.get_db_manager()
+        self.check_that_database_is_set_up()
         self.segment_counter = self.init_segment_counter()
+        self.run_ingestion()
+
+    def run_ingestion(self):
+        already_ingested = self.nibrs_year_already_ingested()
+        if not already_ingested:
+            self.ingest_all_lines()
 
     @cached_property
     def file_name(self) -> str:
@@ -150,6 +218,16 @@ class NIBRSMasterFileIngester:
     def get_db_manager(self) -> DuckDBManager:
         db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
         return DuckDBManager(db_path=db_path)
+
+    def check_that_database_is_set_up(self) -> None:
+        nibrs_metadata_tables = self.db_manager.list_tables("nibrs_metadata")
+        nibrs_raw_tables = self.db_manager.list_tables("nibrs_raw")
+        if "nibrs_metadata" not in self.db_manager.list_schemas():
+            raise SchemaMissingError("Schema nibrs_metadata must be created.")
+        if ("nibrs_master_metadata" not in nibrs_metadata_tables) or (
+            any([ns not in nibrs_raw_tables for ns in self.nibrs_segments])
+        ):
+            raise TableMissingError("Required tables must be created.")
 
     def assert_nibrs_year_data_available(self):
         if not self.file_path.is_file():
@@ -190,7 +268,62 @@ class NIBRSMasterFileIngester:
                     line = line.replace("\x00", " ")
                     yield line
 
-    # def nibrs_year_already_ingested(self):
+    def get_segment_record_count(self, segment_name) -> int:
+        record_counts = self.db_manager.query(f"""
+            SELECT count(*) AS record_count
+            FROM nibrs_raw.{segment_name}
+            WHERE year = {self.nibrs_year}
+            ORDER BY ingested_at DESC
+            LIMIT 1
+        """)["record_count"]
+        if len(record_counts) > 0:
+            return record_counts.values[0]
+        else:
+            return 0
+
+    def nibrs_year_already_ingested(self) -> bool:
+        prior_year_ingestions = self.db_manager.query(f"""
+            SELECT *
+            FROM nibrs_metadata.nibrs_master_metadata
+            WHERE year = {self.nibrs_year}
+        """)
+        if len(prior_year_ingestions) == 0:
+            return False
+        latest_ingestion = (
+            prior_year_ingestions.sort_values(by="ingested_at", ascending=False).iloc[0:1].copy()
+        )
+        expected_hash = latest_ingestion["file_hash"].values[0]
+        hash_matches = expected_hash == self.file_hash
+        if not hash_matches:
+            raise SourceDataChangedError(
+                f"Hash of the nibrs-{self.nibrs_year}.zip doesn't match the cached value.\n"
+                f"Expected hash: {expected_hash}\n"
+                f"Observed hash: {self.file_hash}\n\n. Please investigate."
+            )
+        for segment_code, segment_name in self.nibrs_segments:
+            expected_count = latest_ingestion[segment_name].values[0]
+            count_in_table = self.get_segment_record_count(segment_name)
+            record_counts_match = expected_count == count_in_table
+            if not record_counts_match:
+                raise DatabaseRecordCountError(
+                    f"The {segment_name} database table doesn't have the expected record count.\n"
+                    f"Expected records: {expected_count}\n"
+                    f"Observed records: {count_in_table}"
+                )
+        return True
+
+    def ingest_all_lines(self) -> None:
+        for line in self.get_file_lines():
+            segment_code = line[0:2]
+            parser = self.nibrs_segment_parsers.get(segment_code, None)
+            if parser is None:
+                raise KeyError(f"Line has an invalid segment code: {segment_code}. Line: {line}")
+            parsed_record = parser(line)
+            # ToDo: implement ingest_line() to ingest lines, and then increment the appropriate
+            #       count in self.segment_counter.
+
+    def ingest_line(self, line: str) -> None:
+        pass
 
 
 class NIBRSPipeline:
