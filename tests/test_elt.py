@@ -120,32 +120,44 @@ def class_setup_database(temp_project_root, setup_database):
 
 @pytest.mark.usefixtures("class_setup_database")
 class TestNIBRSPipeline:
-    """Group related tests into a class to share fixtures efficiently."""
-
     def test_schema_setup(self, temp_project_root):
-        """Test that schemas are created correctly."""
-        # from elt import NIBRSMasterFilePipeline
         pipeline = NIBRSMasterFilePipeline(temp_project_root)
         schemas = pipeline.db_manager.list_schemas()
         assert "nibrs_raw" in schemas
         assert "nibrs_metadata" in schemas
 
     def test_tables_created(self, temp_project_root, test_zip_archive):
-        """Test that tables are created correctly."""
-        # from elt import NIBRSMasterFileIngester
-
         ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
-        schemas = ingester.db_manager.list_schemas()
         metadata_tables = ingester.db_manager.list_tables("nibrs_metadata")
         raw_tables = ingester.db_manager.list_tables("nibrs_raw")
-        print(f"metadata_tables: {metadata_tables}")
-        print(f"raw_tables:      {raw_tables}")
-        assert "nibrs_raw" in schemas
-        assert "nibrs_metadata" in schemas
+        assert all(
+            [
+                t in raw_tables
+                for t in [
+                    "batch_header",
+                    "batch_header_p1",
+                    "batch_header_p2",
+                    "batch_header_p3",
+                    "administrative",
+                    "offense",
+                    "property",
+                    "victim",
+                    "offender",
+                    "arrestee",
+                    "arrest",
+                    "window_ex_clear",
+                    "window_property",
+                    "window_arrestee",
+                ]
+            ]
+        )
+        assert "nibrs_master_metadata" in metadata_tables
+
+    def test_year_not_ingested_pre_ingestion(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        assert not ingester.nibrs_year_already_ingested()
 
     def test_segment_counts_after_ingestion(self, temp_project_root, test_zip_archive):
-        """Test that segment counts are right after ingestion."""
-        # from elt import NIBRSMasterFileIngester
         ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
         assert sum(ingester.segment_counter.values()) == 0
         metadata_df = ingester.db_manager.query(
@@ -182,7 +194,19 @@ class TestNIBRSPipeline:
         assert not metadata_df.empty
         assert ingester.file_hash in metadata_df["file_hash"].unique()
 
-    def test_01_data_ingested_right(self, temp_project_root, test_zip_archive):
+    def test_bh_data_ingested_correctly(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        data_df = ingester.db_manager.query("select * from nibrs_raw.batch_header")
+        assert data_df["ori"].to_list() == ["AK0010100", "AK0010200"]
+        assert data_df["city"].to_list() == [
+            "ANCHORAGE                     ",
+            "FAIRBANKS                     ",
+        ]
+        assert data_df["pop_group"].to_list() == ["1C", "4 "]
+        assert data_df["nibrs_flag"].to_list() == [" ", "A"]
+        assert data_df["fbi_field_office"].to_list() == ["3030", "3030"]
+
+    def test_01_data_ingested_correctly(self, temp_project_root, test_zip_archive):
         ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
         data_df = ingester.db_manager.query("select * from nibrs_raw.administrative")
         assert data_df["ori"].to_list() == ["AK0010200", "AK0010200", "AL0010000", "GA0220200"]
@@ -192,3 +216,103 @@ class TestNIBRSPipeline:
             "20211206",
             "20210416",
         ]
+        assert data_df["incident_hour"].to_list() == ["03", "03", "12", "13"]
+        assert data_df["total_victims"].to_list() == ["001", "003", "001", "002"]
+
+    def test_02_data_ingested_correctly(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        data_df = ingester.db_manager.query("select * from nibrs_raw.offense")
+        assert data_df["ori"].to_list() == ["AK0010200", "AL0010200", "CA0334200"]
+        assert data_df["incident_date"].to_list() == ["20210101", "20210426", "20210715"]
+        assert data_df["ucr_offense_code"].to_list() == ["290", "23H", "23F"]
+        assert data_df["location_type"].to_list() == ["14", "20", "13"]
+
+    def test_03_data_ingested_correctly(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        data_df = ingester.db_manager.query("select * from nibrs_raw.property")
+        assert data_df["ori"].to_list() == ["AK0010200", "AL0010200", "CA0370000"]
+        assert data_df["incident_no"].to_list() == ["21000004    ", "7F90C983385D", "21126124    "]
+        assert data_df["incident_date"].to_list() == ["20210101", "20210709", "20210618"]
+        assert data_df["property_descr"].to_list() == ["08", "77", "20"]
+
+    def test_04_data_ingested_correctly(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        data_df = ingester.db_manager.query("select * from nibrs_raw.victim")
+        assert data_df["ori"].to_list() == ["AK0010200", "AL0010200", "CA0370000"]
+        assert data_df["incident_no"].to_list() == ["21000004    ", "451B32E2525C", "21109994    "]
+        assert data_df["incident_date"].to_list() == ["20210101", "20210514", "20210308"]
+        assert data_df["victim_of_ucr_offense1"].to_list() == ["290", "26F", "23F"]
+        assert data_df["victim_age"].to_list() == ["  ", "56", "39"]
+
+    def test_05_data_ingested_correctly(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        data_df = ingester.db_manager.query("select * from nibrs_raw.offender")
+        assert data_df["ori"].to_list() == ["AK0010200", "AL0010200", "CA0370000"]
+        assert data_df["incident_no"].to_list() == ["21000004    ", "474AA46F2176", "21127384    "]
+        assert data_df["incident_date"].to_list() == ["20210101", "20210708", "20210625"]
+        assert data_df["offender_age"].to_list() == ["64", "16", "29"]
+
+    def test_06_data_ingested_correctly(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        data_df = ingester.db_manager.query("select * from nibrs_raw.arrestee")
+        assert data_df["ori"].to_list() == ["AK0010200", "AL0281200", "CA0270000"]
+        assert data_df["incident_no"].to_list() == ["21000019    ", "75AB42761DE8", "FG2102356   "]
+        assert data_df["incident_date"].to_list() == ["20210102", "20210106", "20210429"]
+        assert data_df["arrest_transaction_no"].to_list() == [
+            "46085       ",
+            "78EAA9D876E3",
+            "FG2102356-01",
+        ]
+        assert data_df["ucr_arrest_offense_code"].to_list() == ["13B", "35B", "23G"]
+
+    def test_07_data_ingested_correctly(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        data_df = ingester.db_manager.query("select * from nibrs_raw.arrest")
+        assert data_df["ori"].to_list() == ["AK0010200", "AL0290000", "CA0360400"]
+        assert data_df["incident_no"].to_list() == ["46075       ", "2E01CA187E6C", "AR21090586  "]
+        assert data_df["arrest_date"].to_list() == ["20210101", "20211020", "20210926"]
+        assert data_df["arrestee_age"].to_list() == ["33", "39", "50"]
+        assert data_df["arrestee_residency"].to_list() == ["R", "N", "N"]
+
+    def test_W1_data_ingested_correctly(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        data_df = ingester.db_manager.query("select * from nibrs_raw.window_ex_clear")
+        assert data_df["ori"].to_list() == ["AZ0111200", "DE0020300"]
+        assert data_df["incident_no"].to_list() == ["S20001291   ", "3219011670  "]
+        assert data_df["incident_date"].to_list() == ["20200609", "20190205"]
+        assert data_df["ex_cleared_date"].to_list() == ["20210204", "20210106"]
+
+    def test_W3_data_ingested_correctly(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        data_df = ingester.db_manager.query("select * from nibrs_raw.window_property")
+        assert data_df["ori"].to_list() == ["AZ0072500", "CA0370000", "DE303SP00"]
+        assert data_df["incident_no"].to_list() == ["2102301     ", "20139593    ", "0519077275  "]
+        assert data_df["date_recovered"].to_list() == ["20210224", "20210119", "20210206"]
+        assert data_df["motor_vehicles_recovered"].to_list() == ["  ", "01", "  "]
+
+    def test_W6_data_ingested_correctly(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        data_df = ingester.db_manager.query("select * from nibrs_raw.window_arrestee")
+        assert data_df["ori"].to_list() == ["AZ0070300", "DE0020200"]
+        assert data_df["incident_no"].to_list() == ["201225039   ", "3419007198  "]
+        assert data_df["arrest_transaction_no"].to_list() == ["47541       ", "21001006AWS "]
+        assert data_df["arrest_date"].to_list() == ["20210115", "20210125"]
+        assert data_df["ucr_arrest_offense_code"].to_list() == ["13B", "23D"]
+
+    def test_check_segment_record_counts(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        assert ingester.get_segment_record_count("batch_header") == 2
+        assert ingester.get_segment_record_count("administrative") == 4
+        assert ingester.get_segment_record_count("offense") == 3
+        assert ingester.get_segment_record_count("property") == 3
+        assert ingester.get_segment_record_count("victim") == 3
+        assert ingester.get_segment_record_count("offender") == 3
+        assert ingester.get_segment_record_count("arrestee") == 3
+        assert ingester.get_segment_record_count("arrest") == 3
+        assert ingester.get_segment_record_count("window_ex_clear") == 2
+        assert ingester.get_segment_record_count("window_property") == 3
+        assert ingester.get_segment_record_count("window_arrestee") == 2
+
+    def test_year_ingested_post_ingestion(self, temp_project_root, test_zip_archive):
+        ingester = NIBRSMasterFileIngester(project_root=temp_project_root, nibrs_year=2021)
+        assert ingester.nibrs_year_already_ingested()

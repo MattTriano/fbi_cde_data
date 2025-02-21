@@ -4,6 +4,7 @@ import hashlib
 import io
 import logging
 from pathlib import Path
+import re
 from typing import Generator
 import zipfile
 
@@ -48,6 +49,17 @@ class NIBRSMasterFilePipeline:
         setup_logging()
         self.logger = logging.getLogger(self.__class__.__name__)
         self.setup()
+
+    @cached_property
+    def data_dir(self) -> Path:
+        return self.project_root.joinpath("data", "master")
+
+    def get_paths_to_nibrs_master_data_files(self) -> list[Path]:
+        return [
+            p
+            for p in self.data_dir.iterdir()
+            if re.match(r"nibrs-((199\d)|(20[0-3]\d)).zip", p.name)
+        ]
 
     def setup(self):
         self.setup_schemas()
@@ -275,8 +287,7 @@ class NIBRSMasterFileIngester:
         record_counts = self.db_manager.query(f"""
             SELECT count(*) AS record_count
             FROM nibrs_raw.{segment_name}
-            WHERE year = {self.nibrs_year}
-            ORDER BY ingested_at DESC
+            WHERE nibrs_year = {self.nibrs_year}
             LIMIT 1
         """)["record_count"]
         if len(record_counts) > 0:
@@ -303,8 +314,8 @@ class NIBRSMasterFileIngester:
                 f"Expected hash: {expected_hash}\n"
                 f"Observed hash: {self.file_hash}\n\n. Please investigate."
             )
-        for segment_code, segment_name in self.nibrs_segments:
-            expected_count = latest_ingestion[segment_name].values[0]
+        for segment_code, segment_name in self.nibrs_segments.items():
+            expected_count = latest_ingestion[f"segment_{segment_code.lower()}_count"].values[0]
             count_in_table = self.get_segment_record_count(segment_name)
             record_counts_match = expected_count == count_in_table
             if not record_counts_match:
