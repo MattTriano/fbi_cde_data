@@ -13,7 +13,9 @@ wheels/
 # Credential files
 .env
 
+data/master/*
 !data/master/.gitkeep
-data/master/
+data/databases/*
 !data/databases/.gitkeep
-data/databases/
+logs/*
+!logs/.gitkeep
