@@ -1,8 +1,11 @@
-# FBI CDE Data Utility
+# FBI CDE Data Platform
 
-This repo develops utilities for collecting and exploring FBI NIBRS/UCR data, parsing said data both from the FBI Crime Data Explorer API and from the FBI NIBRS master datasets.
+This repo develops utilities for collecting and exploring FBI NIBRS/UCR data, parsing said data both from the FBI Crime Data Explorer (CDE) API and from the FBI NIBRS master datasets.
 
-API data collection will be implemented first, and the master dataset parser will be implemented second and used to validate the API data.
+At present, this project implements:
+* a pipeline to ingest FBI CDE datasets from master archive files into a DuckDB database,
+* a pipeline to ingest some data from CDE API endpoints into that DuckDB database, and
+* a (streamlit) web app that allows you to query the database from your browser.
 
 ## Setup
 
@@ -12,13 +15,19 @@ This project requires an FBI CDE API key to work. You can get one for free by en
 
 ## Usage
 
-At present, this project collects ORI data for the states listed [here] in the `<project_root>/src/elt.py` file and ingests it into a DuckDB database file (at `<project_root>/data/databases/cde_dwh.duckdb`).
+At present, this project primarily runs an ingestion pipeline that ingests NIBRS master data files in the `/data/master/` directory (these files must have the default name pattern used by the FBI `nibrs-<yyyy>.zip`). These data files must be manually downloaded from the FBI CDE site as described in the [NIBRS Master Extracts](#nibrs-master-extracts) section below.
 
-To run the pipeline from the command line, activate your env and run the `<project_root>/src/elt.py` script.
+
+To run the pipeline from the command line, run the `<project_root>/src/elt.py` script.
 
 ```console
-source .venv/bin/activate. # or .venv\Scripts\activate on windows
-python src/elt.py
+uv run python src/elt.py
+```
+
+You can also run the API pipeline by adding on the `--run_api_pipeline` flag. At present, this pipeline collects ORI data for the states listed [here](https://github.com/MattTriano/fbi_cde_data/blob/cd21ad0c24124adb874515a5bdf94a3c133c535e/src/parsers/constants.py#L1) in the `<project_root>/src/parsers/constants.py` file and ingests it into a DuckDB database file (at `<project_root>/data/databases/cde_dwh.duckdb`).
+
+```console
+uv run python src/elt.py --run_api_pipeline
 ```
 
 ### Query interface
@@ -26,9 +35,8 @@ python src/elt.py
 Run this command to open the Streamlit database querying interface. The console output will include three URLs, click the one that's appropriate for your situation (or try all three if you're unsure).
 
 ```console
-streamlit run apps/query_interface.py
+uv run streamlit run apps/query_interface.py
 ```
-
 
 # Source Data
 

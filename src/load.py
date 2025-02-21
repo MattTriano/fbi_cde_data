@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import logging
 from pathlib import Path
 import re
 from typing import Optional, Union
@@ -29,6 +30,7 @@ class DuckDBManager:
     def __init__(self, db_path: Path, read_only: bool = False):
         self.db_path = db_path
         self.read_only = read_only
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     @contextmanager
     def _get_connection(self):
@@ -46,6 +48,7 @@ class DuckDBManager:
             result = conn.execute(query)
             return result.df()
         except Exception as e:
+            self.logger.error(f"Failed to execute query: {query}")
             raise QueryError(f"Query execution failed: {str(e)}")
 
     def query(
@@ -127,6 +130,7 @@ class DuckDBManager:
 
         try:
             with self._get_connection() as conn:
+                self.logger.info(f"Elements in df: {len(df)}")
                 conn.register("temp_df", df)
 
                 if table_exists:
