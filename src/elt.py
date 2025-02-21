@@ -48,18 +48,36 @@ class NIBRSMasterFilePipeline:
         self.db_manager = self.get_db_manager()
         setup_logging()
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.setup()
 
     @cached_property
     def data_dir(self) -> Path:
         return self.project_root.joinpath("data", "master")
 
+    def run_pipeline(self) -> None:
+        self.logger.info("Setting up database schemas and tables")
+        self.setup()
+        self.logger.info("Starting ingestion pipeline")
+        self.ingest_all_data_files()
+        self.logger.info("Finished running ingestion pipeline")
+
+    def ingest_all_data_files(self) -> None:
+        for file_path in self.get_paths_to_nibrs_master_data_files():
+            match = re.search(r"((199\d)|(20[0-3]\d))", file_path.name)
+            if match:
+                nibrs_year = match.group()
+            else:
+                raise ValueError("Year missing from nibrs zip archive name.")
+            ingester = NIBRSMasterFileIngester(self.project_root, nibrs_year)
+            ingester.run_ingestion()
+
     def get_paths_to_nibrs_master_data_files(self) -> list[Path]:
-        return [
+        file_paths = [
             p
             for p in self.data_dir.iterdir()
             if re.match(r"nibrs-((199\d)|(20[0-3]\d)).zip", p.name)
         ]
+        file_paths = sorted(file_paths, key=lambda x: x.name)
+        return file_paths
 
     def setup(self):
         self.setup_schemas()
@@ -185,7 +203,7 @@ class NIBRSMasterFileIngester:
         "W6": nibrs.SegmentW6Parser,
     }
 
-    def __init__(self, project_root: Path, nibrs_year: int, batch_size: int = 10000):
+    def __init__(self, project_root: Path, nibrs_year: int, batch_size: int = 50000):
         self.project_root = project_root
         self.nibrs_year = nibrs_year
         self.batch_size = batch_size
@@ -196,13 +214,15 @@ class NIBRSMasterFileIngester:
         self.segment_counter = {segment_code: 0 for segment_code in self.nibrs_segments.keys()}
         # Creates holders for batches of records. Valid only in single-threaded flow.
         self.segment_batches = {segment_code: [] for segment_code in self.nibrs_segments.keys()}
-        # self.run_ingestion()
 
     def run_ingestion(self):
         already_ingested = self.nibrs_year_already_ingested()
         if not already_ingested:
+            self.logger.info(f"Starting ingestion for NIBRS year {self.nibrs_year}")
             self.ingest_all_lines()
             self.record_ingestion_metadata()
+        else:
+            self.logger.info(f"NIBRS year {self.nibrs_year} already ingested")
 
     def record_ingestion_metadata(self) -> None:
         metadata_insert_stmt = self._format_metadata_record_insert_stmt()
@@ -471,18 +491,21 @@ class NIBRSPipeline:
             )
 
 
-def main(project_root: Path, update_oris: bool) -> None:
+def main(project_root: Path, run_api_pipeline: bool, update_oris: bool) -> None:
     setup_logging()
-    print(project_root)
-    print(f"update_oris: {update_oris}")
-    pipeline = NIBRSPipeline(project_root, update_oris)
-    pipeline.run_pipeline()
+    nibrs_pipeline = NIBRSMasterFilePipeline(project_root)
+    nibrs_pipeline.run_pipeline()
+    if run_api_pipeline:
+        api_pipeline = NIBRSPipeline(project_root, update_oris)
+        api_pipeline.run_pipeline()
 
 
 if __name__ == "__main__":
-    print(f"__file__: {__file__}")
     parser = argparse.ArgumentParser(
-        description="Runs a pipeline to collect NIBRS data and load it into a duckdb database."
+        description=(
+            "Runs a pipeline to extract NIBRS data from zip archives and load it into a "
+            "duckdb database."
+        )
     )
     parser.add_argument(
         "--project_root_dir",
@@ -490,6 +513,11 @@ if __name__ == "__main__":
         default=str(Path(__file__).parent.parent),
         help="Path to the project's root dir",
     )
+    parser.add_argument("--run_api_pipeline", action="store_true", help="Runs the API pipeline")
     parser.add_argument("--update_oris", action="store_true", help="Forces redownload of ORI data")
     args = parser.parse_args()
-    main(project_root=Path(args.project_root_dir), update_oris=args.update_oris)
+    main(
+        project_root=Path(args.project_root_dir),
+        run_api_pipeline=args.run_api_pipeline,
+        update_oris=args.update_oris,
+    )
