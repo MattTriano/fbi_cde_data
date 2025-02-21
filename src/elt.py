@@ -188,7 +188,15 @@ class NIBRSMasterFileIngester:
         already_ingested = self.nibrs_year_already_ingested()
         if not already_ingested:
             self.ingest_all_lines()
-            # ToDo: Implement _format_metadata_insert_stmt() and call it here
+            self.record_ingestion_metadata()
+
+    def record_ingestion_metadata(self) -> None:
+        metadata_insert_stmt = self._format_metadata_record_insert_stmt()
+        result = self.db_manager.query(metadata_insert_stmt)
+        self.logger.info(
+            f"Recorded metadata for this ingestion.\nMetadata:\n\n{metadata_insert_stmt}\n"
+            f"Result: {result}"
+        )
 
     @cached_property
     def file_name(self) -> str:
@@ -388,16 +396,29 @@ class NIBRSMasterFileIngester:
         )
         return insert_stmt
 
-    def _format_record_insert_stmt(self, table_name: str, record: dict[str, str]) -> str:
-        column_names = ["nibrs_year", *list(record.keys())]
-        column_values = [str(self.nibrs_year), *list(record.values())]
+    def _format_metadata_record_insert_stmt(self) -> str:
+        metadata_record = {"year": self.nibrs_year}
+        metadata_record.update(
+            {f"segment_{k.lower()}_count": v for k, v in self.segment_counter.items()}
+        )
+        metadata_record["file_hash"] = self.file_hash
+
+        column_names = []
+        escaped_values = []
+        for k, v in metadata_record.items():
+            column_names.append(k)
+            if isinstance(v, int):
+                escaped_values.append(str(v))
+            else:
+                escaped_value = str(v).replace("'", "''")
+                escaped_values.append(f"'{escaped_value}'")
         column_names_str = ", ".join(column_names)
-        column_values_str = "'" + "', '".join(column_values) + "'"
+        values_str = ", ".join(escaped_values)
         insert_stmt = (
-            f"INSERT INTO nibrs_raw.{table_name}\n"
+            "INSERT INTO nibrs_metadata.nibrs_master_metadata\n"
             f"    ({column_names_str})\n"
             "VALUES\n"
-            f"    ({column_values_str});"
+            f"    ({values_str});"
         )
         return insert_stmt
 
