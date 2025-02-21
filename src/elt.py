@@ -52,6 +52,7 @@ class NIBRSMasterFilePipeline:
     def setup(self):
         self.setup_schemas()
         self.setup_nibrs_metadata_table()
+        self.setup_segment_tables()
 
     def get_db_manager(self) -> DuckDBManager:
         db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
@@ -172,7 +173,7 @@ class NIBRSMasterFileIngester:
         "W6": nibrs.SegmentW6Parser,
     }
 
-    def __init__(self, project_root: Path, nibrs_year: int, batch_size: int = 1000):
+    def __init__(self, project_root: Path, nibrs_year: int, batch_size: int = 10000):
         self.project_root = project_root
         self.nibrs_year = nibrs_year
         self.batch_size = batch_size
@@ -180,8 +181,9 @@ class NIBRSMasterFileIngester:
         self.assert_nibrs_year_data_available()
         self.db_manager = self.get_db_manager()
         self.check_that_database_is_set_up()
-        self.segment_counter = self.init_segment_counter()
-        self.segment_batches = self.init_segment_batches()
+        self.segment_counter = {segment_code: 0 for segment_code in self.nibrs_segments.keys()}
+        # Creates holders for batches of records. Valid only in single-threaded flow.
+        self.segment_batches = {segment_code: [] for segment_code in self.nibrs_segments.keys()}
         # self.run_ingestion()
 
     def run_ingestion(self):
@@ -210,33 +212,6 @@ class NIBRSMasterFileIngester:
     def file_path(self) -> Path:
         return self.data_dir.joinpath(self.file_name)
 
-    def init_segment_counter(self) -> dict[str, str]:
-        return {segment_code: 0 for segment_code in self.nibrs_segments.keys()}
-
-    def init_segment_batches(self) -> dict[str, list[dict[str, str]]]:
-        """Creates holders for batches of records. Valid only in single-threaded flow."""
-        return {segment_code: [] for segment_code in self.nibrs_segments.keys()}
-
-    def get_db_manager(self) -> DuckDBManager:
-        db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
-        return DuckDBManager(db_path=db_path)
-
-    def check_that_database_is_set_up(self) -> None:
-        nibrs_metadata_tables = self.db_manager.list_tables("nibrs_metadata")
-        nibrs_raw_tables = self.db_manager.list_tables("nibrs_raw")
-        if "nibrs_metadata" not in self.db_manager.list_schemas():
-            raise SchemaMissingError("Schema nibrs_metadata must be created.")
-        if ("nibrs_master_metadata" not in nibrs_metadata_tables) or (
-            any([ns not in nibrs_raw_tables for ns in self.nibrs_segments.values()])
-        ):
-            raise TableMissingError("Required tables must be created.")
-
-    def assert_nibrs_year_data_available(self):
-        if not self.file_path.is_file():
-            raise FileNotFoundError(
-                f"No file named {self.file_name} found in directory {self.data_dir}."
-            )
-
     @cached_property
     def file_hash(self) -> str:
         sha256_hash = hashlib.sha256()
@@ -245,18 +220,18 @@ class NIBRSMasterFileIngester:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
 
+    def assert_nibrs_year_data_available(self):
+        if not self.file_path.is_file():
+            raise FileNotFoundError(
+                f"No file named {self.file_name} found in directory {self.data_dir}."
+            )
+
     def get_archive_compression(self) -> str:
         with zipfile.ZipFile(self.file_path, "r") as zf:
             file_info = zf.infolist()
             file_info = sorted(file_info, key=lambda x: x.file_size, reverse=True)
             compression_type = zipfile.compressor_names.get(file_info[0].compress_type, "unknown")
             return compression_type
-
-    def get_total_file_line_count(self) -> int:
-        self.logger.info("Starting to count lines in zipped file (could take 15 to 25 seconds)")
-        line_count = sum(1 for _ in self.get_file_lines())
-        self.logger.info(f"Finished counting.\nLines in zipped file: {line_count}")
-        return line_count
 
     def get_file_lines(self, encoding: str = "latin1") -> Generator[str, None, None]:
         compression_type = self.get_archive_compression()
@@ -275,6 +250,26 @@ class NIBRSMasterFileIngester:
                 for line in text_file:
                     line = line.replace("\x00", " ")
                     yield line
+
+    def get_total_file_line_count(self) -> int:
+        self.logger.info("Starting to count lines in zipped file (could take 15 to 25 seconds)")
+        line_count = sum(1 for _ in self.get_file_lines())
+        self.logger.info(f"Finished counting.\nLines in zipped file: {line_count}")
+        return line_count
+
+    def get_db_manager(self) -> DuckDBManager:
+        db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
+        return DuckDBManager(db_path=db_path)
+
+    def check_that_database_is_set_up(self) -> None:
+        nibrs_metadata_tables = self.db_manager.list_tables("nibrs_metadata")
+        nibrs_raw_tables = self.db_manager.list_tables("nibrs_raw")
+        if "nibrs_metadata" not in self.db_manager.list_schemas():
+            raise SchemaMissingError("Schema nibrs_metadata must be created.")
+        if ("nibrs_master_metadata" not in nibrs_metadata_tables) or (
+            any([ns not in nibrs_raw_tables for ns in self.nibrs_segments.values()])
+        ):
+            raise TableMissingError("Required tables must be created.")
 
     def get_segment_record_count(self, segment_name) -> int:
         record_counts = self.db_manager.query(f"""
