@@ -1,0 +1,21 @@
+version: 2
+
+sources:
+  - name: nibrs_raw
+    description: "Tables of raw nibrs data."
+    schema: nibrs_raw
+    tables:
+      - name: administrative
+      - name: arrest
+      - name: arrestee
+      - name: batch_header
+      - name: batch_header_p1
+      - name: batch_header_p2
+      - name: batch_header_p3
+      - name: offender
+      - name: offense
+      - name: property
+      - name: victim
+      - name: window_arrestee
+      - name: window_ex_clear
+      - name: window_property

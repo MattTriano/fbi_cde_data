@@ -1,0 +1,12 @@
+fbi_dbt:
+  target: prod
+  outputs:
+    dev:
+      type: duckdb
+      path: ../data/databases/dev_cde_dwh.duckdb
+      threads: 4
+
+    prod:
+      type: duckdb
+      path: ../data/databases/cde_dwh.duckdb
+      threads: 4
