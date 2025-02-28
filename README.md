@@ -32,6 +32,11 @@ uv run python src/elt.py --run_api_pipeline
 
 ### dbt commands
 
+To install dbt packages:
+```console
+uv run dbt deps
+```
+
 To run dbt tests:
 ```console
 uv run dbt test
