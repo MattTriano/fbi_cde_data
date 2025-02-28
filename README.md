@@ -31,6 +31,7 @@ uv run python src/elt.py --run_api_pipeline
 ```
 
 ### dbt commands
+First, navigate into the `<project_root>/fbi_dbt/` dir (required for commands to work).
 
 To install dbt packages:
 ```console

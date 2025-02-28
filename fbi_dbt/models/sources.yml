@@ -6,6 +6,13 @@ sources:
     schema: nibrs_raw
     tables:
       - name: administrative
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
       - name: arrest
       - name: arrestee
       - name: batch_header

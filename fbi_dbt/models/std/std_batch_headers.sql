@@ -29,11 +29,14 @@ with deduped_bh_part1 as (
         nullif(nullif(trim(nibrs_flag), ''), '\n') as nibrs_flag,
         case
             when
-                regexp_matches(trim(inactive_date), '^[0-9]{8}$')
+                regexp_matches(
+                    trim(inactive_date),
+                    '^((199[1-9])|(20[0-3][0-9]))((0[1-9])|(1[0-2]))(([0-2][0-9])|(3[01]))$'
+                )
                 and trim(inactive_date) != '00000000'
             then try_cast(strptime(trim(inactive_date), '%Y%m%d') as date)
             else NULL
-        end as inactive_date
+        end                                      as inactive_date
     from {{ source('nibrs_raw', 'batch_header_p1') }}
     order by nibrs_year, ori
 ),
@@ -234,7 +237,10 @@ deduped_bh_seg as (
         nullif(nullif(trim(nibrs_flag), ''), '\n')                      as nibrs_flag,
         case
             when
-                regexp_matches(trim(inactive_date), '^[0-9]{8}$')
+                regexp_matches(
+                    trim(inactive_date),
+                    '^((199[1-9])|(20[0-3][0-9]))((0[1-9])|(1[0-2]))(([0-2][0-9])|(3[01]))$'
+                )
                 and trim(inactive_date) != '00000000'
             then try_cast(strptime(trim(inactive_date), '%Y%m%d') as date)
             else NULL
