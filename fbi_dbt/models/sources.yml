@@ -9,9 +9,37 @@ sources:
       - name: arrest
       - name: arrestee
       - name: batch_header
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
       - name: batch_header_p1
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
       - name: batch_header_p2
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
       - name: batch_header_p3
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
       - name: offender
       - name: offense
       - name: property
