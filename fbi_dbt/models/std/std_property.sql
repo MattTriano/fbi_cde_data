@@ -23,12 +23,10 @@ with property_seg as (
         {{ trim_and_stdize_nulls('suspected_drug1_qty') }}::integer        as suspected_drug1_qty,
         {{ trim_and_stdize_nulls('suspected_drug1_qty_thous') }}::smallint as suspected_drug1_qty_thous,
         {{ trim_and_stdize_nulls('suspected_drug1_qty_units') }}           as suspected_drug1_qty_units,
-
         {{ trim_and_stdize_nulls('suspected_drug2') }}                     as suspected_drug2,
         {{ trim_and_stdize_nulls('suspected_drug2_qty') }}::integer        as suspected_drug2_qty,
         {{ trim_and_stdize_nulls('suspected_drug2_qty_thous') }}::smallint as suspected_drug2_qty_thous,
         {{ trim_and_stdize_nulls('suspected_drug2_qty_units') }}           as suspected_drug2_qty_units,
-
         {{ trim_and_stdize_nulls('suspected_drug3') }}                     as suspected_drug3,
         {{ trim_and_stdize_nulls('suspected_drug3_qty') }}::integer        as suspected_drug3_qty,
         {{ trim_and_stdize_nulls('suspected_drug3_qty_thous') }}::smallint as suspected_drug3_qty_thous,

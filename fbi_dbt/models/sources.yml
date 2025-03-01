@@ -48,9 +48,41 @@ sources:
             tests:
               - not_null
       - name: offender
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+          - name: incident_no
+            tests:
+              - not_null
+          - name: incident_date
+            tests:
+              - not_null
+          - name: offender_seq_no
+            tests:
+              - not_null
       - name: offense
       - name: property
       - name: victim
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+          - name: incident_no
+            tests:
+              - not_null
+          - name: incident_date
+            tests:
+              - not_null
+          - name: victim_seq_no
+            tests:
+              - not_null
       - name: window_arrestee
       - name: window_ex_clear
       - name: window_property
