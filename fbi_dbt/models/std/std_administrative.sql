@@ -1,4 +1,4 @@
-{{ config(materialized='table', schema='nibrs_std') }}
+{{ config(materialized='view', schema='nibrs_std') }}
 
 with admin_seg as (
     select

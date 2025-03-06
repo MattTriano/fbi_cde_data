@@ -10,7 +10,7 @@ with offender_seg as (
         {{ parse_nibrs_date('incident_date') }}                      as incident_date,
         nullif(
             regexp_replace(offender_seq_no, '[\s\n#]', '', 'g'), ''
-        )::integer                                                   as offender_seq_no,
+        )::smallint                                                  as offender_seq_no,
         {{ trim_and_stdize_nulls('offender_age') }}::smallint        as offender_age,
         {{ trim_and_stdize_nulls('offender_sex') }}                  as offender_sex,
         {{ trim_and_stdize_nulls('offender_race') }}                 as offender_race
