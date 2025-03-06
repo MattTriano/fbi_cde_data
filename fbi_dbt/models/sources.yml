@@ -85,4 +85,30 @@ sources:
               - not_null
       - name: window_arrestee
       - name: window_ex_clear
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+          - name: incident_no
+            tests:
+              - not_null
+          - name: incident_date
+            tests:
+              - not_null
       - name: window_property
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+          - name: incident_no
+            tests:
+              - not_null
+          - name: incident_date
+            tests:
+              - not_null
