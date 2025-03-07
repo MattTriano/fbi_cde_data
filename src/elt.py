@@ -203,10 +203,17 @@ class NIBRSMasterFileIngester:
         "W6": nibrs.SegmentW6Parser,
     }
 
-    def __init__(self, project_root: Path, nibrs_year: int, batch_size: int = 50000):
+    def __init__(
+        self,
+        project_root: Path,
+        nibrs_year: int,
+        batch_size: int = 50000,
+        replace_x00s: bool = True,
+    ):
         self.project_root = project_root
         self.nibrs_year = nibrs_year
         self.batch_size = batch_size
+        self.replace_x00s = replace_x00s
         self.logger = logging.getLogger(self.__class__.__name__)
         self.assert_nibrs_year_data_available()
         self.db_manager = self.get_db_manager()
@@ -280,7 +287,8 @@ class NIBRSMasterFileIngester:
             with zf.open(file_name, "r") as f:
                 text_file = io.TextIOWrapper(f, encoding=encoding)
                 for line in text_file:
-                    line = line.replace("\x00", " ")
+                    if self.replace_x00s:
+                        line = line.replace("\x00", " ")
                     yield line
 
     def get_total_file_line_count(self) -> int:
@@ -334,16 +342,23 @@ class NIBRSMasterFileIngester:
                 f"Expected hash: {expected_hash}\n"
                 f"Observed hash: {self.file_hash}\n\n. Please investigate."
             )
+        segment_empty = []
         for segment_code, segment_name in self.nibrs_segments.items():
             expected_count = latest_ingestion[f"segment_{segment_code.lower()}_count"].values[0]
             count_in_table = self.get_segment_record_count(segment_name)
             record_counts_match = expected_count == count_in_table
-            if not record_counts_match:
+            if count_in_table == 0:
+                segment_empty.append(True)
+            elif not record_counts_match:
                 raise DatabaseRecordCountError(
                     f"The {segment_name} database table doesn't have the expected record count.\n"
                     f"Expected records: {expected_count}\n"
                     f"Observed records: {count_in_table}"
                 )
+            else:
+                segment_empty.append(False)
+        if all(segment_empty):
+            return False
         return True
 
     def _process_batch(self, segment_code: str, segment_name: str) -> None:
