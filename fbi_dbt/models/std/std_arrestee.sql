@@ -27,14 +27,12 @@ with vt_2015_records as (
             || arrestee_under_18_disp
         ) as concat_col
     from {{ source('nibrs_raw', 'arrestee') }}
-    where
-        nibrs_year = 2015 and state_code = '44'
+    where nibrs_year = 2015 and state_code = '44'
 ),
 non_vt_2015_records as (
     select *
     from {{ source('nibrs_raw', 'arrestee') }}
-    where
-        nibrs_year != 2015 and state_code != '44'
+    where not (nibrs_year = 2015 and state_code = '44')
 ),
 fixed_vt_records as (
     select
@@ -68,9 +66,7 @@ fixed_raw_arrestee_records as (
     select * from fixed_vt_records
 ),
 arrestee_seg as (
-    select distinct on (
-        nibrs_year, ori, incident_no, incident_date, arrestee_seq_no, arrest_transaction_no
-    )
+    select
         nibrs_year::smallint                                         as nibrs_year,
         trim(segment)                                                as segment,
         trim(state_code)                                             as state_code,
