@@ -8,14 +8,10 @@ with property_seg as (
         trim(ori)                                                          as ori,
         trim(incident_no)                                                  as incident_no,
         {{ parse_nibrs_date('incident_date') }}                            as incident_date,
-        property_loss_type                                                 as property_loss_type,
-        nullif(
-            regexp_replace(property_descr, '[\s\n]', '', 'g'), ''
-        )                                                                  as property_descr,
+        {{ trim_and_stdize_nulls('property_loss_type') }}                  as property_loss_type,
         {{ trim_and_stdize_nulls('property_descr') }}                      as property_descr,
-        nullif(
-            regexp_replace(property_value, '[\s\n#]', '', 'g'), ''
-        )::integer                                                         as property_value,
+        {{ trim_and_stdize_nulls('property_descr') }}                      as property_descr,
+        {{ trim_and_stdize_nulls('property_value', '[\s\n#]') }}::integer  as property_value,
         {{ parse_nibrs_date('date_recovered') }}                           as date_recovered,
         {{ trim_and_stdize_nulls('motor_vehicles_stolen') }}::smallint     as motor_vehicles_stolen,
         {{ trim_and_stdize_nulls('motor_vehicles_recovered') }}::smallint  as motor_vehicles_recovered,
