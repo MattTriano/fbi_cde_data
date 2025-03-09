@@ -16,6 +16,5 @@ with offender_seg as (
     from {{ source('nibrs_raw', 'offender') }}
 )
 
-select distinct on (nibrs_year, ori, incident_no, incident_date, offender_seq_no)
-    *
+select *
 from offender_seg

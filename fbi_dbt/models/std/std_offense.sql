@@ -1,7 +1,7 @@
 {{ config(materialized='view', schema='nibrs_std') }}
 
 with offense_seg as (
-    select distinct on (nibrs_year, ori, incident_no, ucr_offense_code, incident_date)
+    select
         nibrs_year::smallint                                        as nibrs_year,
         trim(segment)                                               as segment,
         trim(state_code)                                            as state_code,

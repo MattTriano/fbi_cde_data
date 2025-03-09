@@ -1,0 +1,23 @@
+unit_tests:
+  - name: test_std_admitistrative_stage
+    description: >
+      Testing out processing
+      the administrative segment.
+    model: std_administrative
+    given:
+      - input: source('nibrs_raw', 'administrative')
+        format: dict
+        rows:
+          - nibrs_year: 2015
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: 'JE272442    '
+            incident_date: '20210619'
+
+    expect:
+      rows:
+        - nibrs_year: 2015
+          state_code: '12'
+          ori: 'ILCPD0000'
+          incident_no: 'JE272442'
+          incident_date: '2021-06-19'

@@ -318,6 +318,3 @@ from batch_header_from_parts
 union all
 select *
 from deduped_bh_seg
-
--- select * from deduped_bh_seg
--- select * from batch_header_from_parts
