@@ -215,7 +215,7 @@ deduped_bh_seg as (
         trim(segment)                                                   as segment,
         trim(state_code)                                                as state_code,
         trim(ori)                                                       as ori,
-        trim(incident_no)                                               as incident_no,
+        nullif(trim(incident_no), '')                                   as incident_no,
         case
             when trim(ori_added) = '' then NULL
             else strptime(trim(ori_added), '%Y%m%d')

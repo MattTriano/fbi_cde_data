@@ -1,0 +1,60 @@
+unit_tests:
+  - name: test_std_offense_stage
+    description: >
+      Testing out processing the unified offense segment.
+    model: std_offense
+    given:
+      - input: source('nibrs_raw', 'offense')
+        format: dict
+        rows:
+          - nibrs_year: 2021
+            segment: '02'
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: 'JE271631    '
+            incident_date: '20210616'
+            ucr_offense_code: '13C'
+            attempted_or_completed: 'C'
+            offender1_suspected_of_using: 'N'
+            offender2_suspected_of_using: ' '
+            offender3_suspected_of_using: ' '
+            location_type: '20'
+            premises_entered: '  '
+            forced_entry: ' '
+            criminal_activity_type1: 'N'
+            criminal_activity_type2: ' '
+            criminal_activity_type3: ' '
+            weapon_or_force_type1: '  '
+            automatic_ind1: ' '
+            weapon_or_force_type2: '  '
+            automatic_ind2: ' '
+            weapon_or_force_type3: '  '
+            automatic_ind3: ' '
+            bias_motivation: '88'
+
+    expect:
+      rows:
+        - nibrs_year: 2021
+          segment: '02'
+          state_code: '12'
+          ori: 'ILCPD0000'
+          incident_no: 'JE271631'
+          incident_date: '2021-06-16'
+          ucr_offense_code: '13C'
+          attempted_or_completed: 'C'
+          offender1_suspected_of_using: 'N'
+          offender2_suspected_of_using: NULL
+          offender3_suspected_of_using: NULL
+          location_type: '20'
+          premises_entered: NULL
+          forced_entry: NULL
+          criminal_activity_type1: 'N'
+          criminal_activity_type2: NULL
+          criminal_activity_type3: NULL
+          weapon_or_force_type1: NULL
+          automatic_ind1: False
+          weapon_or_force_type2: NULL
+          automatic_ind2: False
+          weapon_or_force_type3: NULL
+          automatic_ind3: False
+          bias_motivation: '88'
