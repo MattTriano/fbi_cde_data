@@ -122,6 +122,7 @@ def class_setup_database(temp_project_root, setup_database):
 class TestNIBRSPipeline:
     def test_schema_setup(self, temp_project_root):
         pipeline = NIBRSMasterFilePipeline(temp_project_root)
+        pipeline.run_pipeline()
         schemas = pipeline.db_manager.list_schemas()
         assert "nibrs_raw" in schemas
         assert "nibrs_metadata" in schemas
