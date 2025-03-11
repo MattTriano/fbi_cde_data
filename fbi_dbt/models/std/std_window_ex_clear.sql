@@ -7,7 +7,7 @@ with ex_clear_seg as (
         trim(state_code)                                       as state_code,
         trim(ori)                                              as ori,
         trim(incident_no)                                      as incident_no,
-        {{ parse_nibrs_date('incident_date') }}                as incident_date,
+        {{ parse_nibrs_date('incident_date', '1900') }}        as incident_date,
         {{ trim_and_stdize_nulls('report_date_ind') }}         as report_date_ind,
         {{ trim_and_stdize_nulls('incident_hour') }}::smallint as incident_hour,
         {{ trim_and_stdize_nulls('total_offenses') }}          as total_offenses,
