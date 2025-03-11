@@ -3,10 +3,10 @@ fbi_dbt:
   outputs:
     dev:
       type: duckdb
-      path: ../data/databases/dev_cde_dwh.duckdb
+      path: "{{ env_var('DBT_DATABASE_PATH', '../data/databases/dev_cde_dwh.duckdb') }}"
       threads: 4
 
     prod:
       type: duckdb
-      path: ../data/databases/cde_dwh.duckdb
+      path: "{{ env_var('DBT_DATABASE_PATH', '../data/databases/cde_dwh.duckdb') }}"
       threads: 4

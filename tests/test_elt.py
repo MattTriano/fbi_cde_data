@@ -36,11 +36,13 @@ def temp_project_root():
     """
     with tempfile.TemporaryDirectory() as tmp_root:
         project_root = Path(tmp_root)
+        dbt_project_dir = project_root.joinpath("fbi_dbt")
         data_dir = project_root.joinpath("data")
         databases_dir = data_dir.joinpath("databases")
         master_dir = data_dir.joinpath("master")
         databases_dir.mkdir(parents=True)
         master_dir.mkdir(parents=True)
+        dbt_project_dir.mkdir(parents=True)
         yield project_root
 
 
@@ -97,16 +99,8 @@ def setup_database(temp_project_root):
     Setup the database schema once at the beginning of the test session.
     This ensures schema creation is done only once and persists across tests.
     """
-    # from elt import NIBRSMasterFilePipeline
     pipeline = NIBRSMasterFilePipeline(temp_project_root)
     return pipeline
-
-
-# def test_schema_setup(temp_project_root):
-#     pipeline = NIBRSMasterFilePipeline(temp_project_root)
-#     schemas = pipeline.db_manager.list_schemas()
-#     assert "nibrs_raw" in schemas
-#     assert "nibrs_metadata" in schemas
 
 
 @pytest.fixture(scope="class")

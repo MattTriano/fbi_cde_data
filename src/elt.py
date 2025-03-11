@@ -3,8 +3,10 @@ from functools import cached_property
 import hashlib
 import io
 import logging
+import os
 from pathlib import Path
 import re
+import subprocess
 from typing import Generator
 import zipfile
 
@@ -26,6 +28,12 @@ class SchemaMissingError(Exception):
 
 class TableMissingError(Exception):
     """Raised when a not-yet-created duckdb table is referenced."""
+
+    pass
+
+
+class DbtProjectDirMissingError(Exception):
+    """Raised when the expected dbt project root directory can't be found."""
 
     pass
 
@@ -59,6 +67,9 @@ class NIBRSMasterFilePipeline:
         self.logger.info("Starting ingestion pipeline")
         self.ingest_all_data_files()
         self.logger.info("Finished running ingestion pipeline")
+        self.logger.info("Starting to transform data")
+        self.transform_data()
+        self.logger.info("Finished transforming data")
 
     def ingest_all_data_files(self) -> None:
         for file_path in self.get_paths_to_nibrs_master_data_files():
@@ -69,6 +80,22 @@ class NIBRSMasterFilePipeline:
                 raise ValueError("Year missing from nibrs zip archive name.")
             ingester = NIBRSMasterFileIngester(self.project_root, nibrs_year)
             ingester.run_ingestion()
+
+    def transform_data(self) -> None:
+        dbt_proj_dir = self.project_root.joinpath("fbi_dbt")
+        db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
+        if not dbt_proj_dir.is_dir():
+            raise DbtProjectDirMissingError(f"Expected to find a dbt project dir in {dbt_proj_dir}")
+        if not db_path.is_file():
+            raise FileNotFoundError(f"Expected to find a duckdb database in {db_path}")
+        os.environ["DBT_DATABASE_PATH"] = str(db_path)
+        results = subprocess.run(
+            ["dbt", "run"],
+            cwd=str(dbt_proj_dir),
+            env=os.environ,
+            capture_output=True,
+        )
+        self.logger.info(results)
 
     def get_paths_to_nibrs_master_data_files(self) -> list[Path]:
         file_paths = [
