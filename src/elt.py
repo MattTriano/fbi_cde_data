@@ -3,8 +3,10 @@ from functools import cached_property
 import hashlib
 import io
 import logging
+import os
 from pathlib import Path
 import re
+import subprocess
 from typing import Generator
 import zipfile
 
@@ -26,6 +28,12 @@ class SchemaMissingError(Exception):
 
 class TableMissingError(Exception):
     """Raised when a not-yet-created duckdb table is referenced."""
+
+    pass
+
+
+class DbtProjectDirMissingError(Exception):
+    """Raised when the expected dbt project root directory can't be found."""
 
     pass
 
@@ -59,6 +67,9 @@ class NIBRSMasterFilePipeline:
         self.logger.info("Starting ingestion pipeline")
         self.ingest_all_data_files()
         self.logger.info("Finished running ingestion pipeline")
+        self.logger.info("Starting to transform data")
+        self.transform_data()
+        self.logger.info("Finished transforming data")
 
     def ingest_all_data_files(self) -> None:
         for file_path in self.get_paths_to_nibrs_master_data_files():
@@ -69,6 +80,22 @@ class NIBRSMasterFilePipeline:
                 raise ValueError("Year missing from nibrs zip archive name.")
             ingester = NIBRSMasterFileIngester(self.project_root, nibrs_year)
             ingester.run_ingestion()
+
+    def transform_data(self) -> None:
+        dbt_proj_dir = self.project_root.joinpath("fbi_dbt")
+        db_path = self.project_root.joinpath("data", "databases", "cde_dwh.duckdb")
+        if not dbt_proj_dir.is_dir():
+            raise DbtProjectDirMissingError(f"Expected to find a dbt project dir in {dbt_proj_dir}")
+        if not db_path.is_file():
+            raise FileNotFoundError(f"Expected to find a duckdb database in {db_path}")
+        os.environ["DBT_DATABASE_PATH"] = str(db_path)
+        results = subprocess.run(
+            ["dbt", "run"],
+            cwd=str(dbt_proj_dir),
+            env=os.environ,
+            capture_output=True,
+        )
+        self.logger.info(results)
 
     def get_paths_to_nibrs_master_data_files(self) -> list[Path]:
         file_paths = [
@@ -203,10 +230,17 @@ class NIBRSMasterFileIngester:
         "W6": nibrs.SegmentW6Parser,
     }
 
-    def __init__(self, project_root: Path, nibrs_year: int, batch_size: int = 50000):
+    def __init__(
+        self,
+        project_root: Path,
+        nibrs_year: int,
+        batch_size: int = 50000,
+        replace_x00s: bool = True,
+    ):
         self.project_root = project_root
         self.nibrs_year = nibrs_year
         self.batch_size = batch_size
+        self.replace_x00s = replace_x00s
         self.logger = logging.getLogger(self.__class__.__name__)
         self.assert_nibrs_year_data_available()
         self.db_manager = self.get_db_manager()
@@ -280,7 +314,8 @@ class NIBRSMasterFileIngester:
             with zf.open(file_name, "r") as f:
                 text_file = io.TextIOWrapper(f, encoding=encoding)
                 for line in text_file:
-                    line = line.replace("\x00", " ")
+                    if self.replace_x00s:
+                        line = line.replace("\x00", " ")
                     yield line
 
     def get_total_file_line_count(self) -> int:
@@ -334,16 +369,23 @@ class NIBRSMasterFileIngester:
                 f"Expected hash: {expected_hash}\n"
                 f"Observed hash: {self.file_hash}\n\n. Please investigate."
             )
+        segment_empty = []
         for segment_code, segment_name in self.nibrs_segments.items():
             expected_count = latest_ingestion[f"segment_{segment_code.lower()}_count"].values[0]
             count_in_table = self.get_segment_record_count(segment_name)
             record_counts_match = expected_count == count_in_table
-            if not record_counts_match:
+            if count_in_table == 0:
+                segment_empty.append(True)
+            elif not record_counts_match:
                 raise DatabaseRecordCountError(
                     f"The {segment_name} database table doesn't have the expected record count.\n"
                     f"Expected records: {expected_count}\n"
                     f"Observed records: {count_in_table}"
                 )
+            else:
+                segment_empty.append(False)
+        if all(segment_empty):
+            return False
         return True
 
     def _process_batch(self, segment_code: str, segment_name: str) -> None:

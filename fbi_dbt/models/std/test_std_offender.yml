@@ -1,0 +1,98 @@
+unit_tests:
+  - name: test_std_offender_stage
+    description: >
+      Testing out processing the unified offender segment.
+    model: std_offender
+    given:
+      - input: source('nibrs_raw', 'offender')
+        format: dict
+        rows:
+          - nibrs_year: 2021
+            segment: '05'
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: 'JE271631    '
+            incident_date: '20210616'
+            offender_seq_no: '01'
+            offender_age: '47'
+            offender_sex: 'M'
+            offender_race: 'B'
+
+          - nibrs_year: 1991
+            segment: '05'
+            state_code: '01'
+            ori: 'AL0010000'
+            incident_no: '6PMJWOVCSMQ-'
+            incident_date: '19910822'
+            offender_seq_no: '01'
+            offender_age: '00'
+            offender_sex: 'U'
+            offender_race: 'U'
+
+          - nibrs_year: 1999
+            segment: '05'
+            state_code: '05'
+            ori: 'CO0010000'
+            incident_no: 'TG-BRHQ16X I'
+            incident_date: '19980909'
+            offender_seq_no: '01'
+            offender_age: '15'
+            offender_sex: 'M'
+            offender_race: 'A'
+
+          - nibrs_year: 2005
+            segment: '05'
+            state_code: '02'
+            ori: 'AZ0010500'
+            incident_no: ' B-B0CQ 728N'
+            incident_date: '20050501'
+            offender_seq_no: '01'
+            offender_age: '28'
+            offender_sex: 'M'
+            offender_race: 'W'
+
+    expect:
+      rows:
+        - nibrs_year: 2021
+          segment: '05'
+          state_code: '12'
+          ori: 'ILCPD0000'
+          incident_no: 'JE271631'
+          incident_date: '2021-06-16'
+          offender_seq_no: 1
+          offender_age: 47
+          offender_sex: 'M'
+          offender_race: 'B'
+
+        - nibrs_year: 1991
+          segment: '05'
+          state_code: '01'
+          ori: 'AL0010000'
+          incident_no: '6PMJWOVCSMQ-'
+          incident_date: '1991-08-22'
+          offender_seq_no: 1
+          offender_age: 0
+          offender_sex: 'U'
+          offender_race: 'U'
+
+        - nibrs_year: 1999
+          segment: '05'
+          state_code: '05'
+          ori: 'CO0010000'
+          incident_no: 'TG-BRHQ16X I'
+          incident_date: '1998-09-09'
+          offender_seq_no: 1
+          offender_age: 15
+          offender_sex: 'M'
+          offender_race: 'A'
+
+        - nibrs_year: 2005
+          segment: '05'
+          state_code: '02'
+          ori: 'AZ0010500'
+          incident_no: 'B-B0CQ 728N'
+          incident_date: '2005-05-01'
+          offender_seq_no: 1
+          offender_age: 28
+          offender_sex: 'M'
+          offender_race: 'W'

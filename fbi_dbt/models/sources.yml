@@ -1,0 +1,114 @@
+version: 2
+
+sources:
+  - name: nibrs_raw
+    description: "Tables of raw nibrs data."
+    schema: nibrs_raw
+    tables:
+      - name: administrative
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+      - name: arrest
+      - name: arrestee
+      - name: batch_header
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+      - name: batch_header_p1
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+      - name: batch_header_p2
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+      - name: batch_header_p3
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+      - name: offender
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+          - name: incident_no
+            tests:
+              - not_null
+          - name: incident_date
+            tests:
+              - not_null
+          - name: offender_seq_no
+            tests:
+              - not_null
+      - name: offense
+      - name: property
+      - name: victim
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+          - name: incident_no
+            tests:
+              - not_null
+          - name: incident_date
+            tests:
+              - not_null
+          - name: victim_seq_no
+            tests:
+              - not_null
+      - name: window_arrestee
+      - name: window_ex_clear
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+          - name: incident_no
+            tests:
+              - not_null
+          - name: incident_date
+            tests:
+              - not_null
+      - name: window_property
+        columns:
+          - name: ori
+            tests:
+              - not_null
+          - name: nibrs_year
+            tests:
+              - not_null
+          - name: incident_no
+            tests:
+              - not_null
+          - name: incident_date
+            tests:
+              - not_null

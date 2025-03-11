@@ -1,0 +1,58 @@
+code,group,category,type,description
+09A,A,homicide offenses,crimes against persons,murder/nonnegligent manslaughter
+09B,A,homicide offenses,crimes against persons,negligent manslaughter
+09C,A,homicide offenses,not a crime,justifiable homicide
+100,A,kidnapping/abduction,crimes against persons,Kidnapping/Abduction
+11A,A,sex offenses,crimes against persons,forcible rape
+11B,A,sex offenses,crimes against persons,forcible sodomy
+11C,A,sex offenses,crimes against persons,sexual assault with an object
+11D,A,sex offenses,crimes against persons,forcible fondling (indecent liberties/child molest)
+120,A,robbery,crimes against property,robbery
+13A,A,assault,crimes against persons,aggravated assault
+13B,A,assault,crimes against persons,simple assault
+13C,A,assault,crimes against persons,intimidation
+200,A,arson,crimes against property,arson
+210,A,extortion/blackmail,crimes against property,extortion/blackmail
+220,A,burglary/breaking and entering,crimes against property,burglary/breaking and entering
+23A,A,larceny/theft offenses,crimes against property,pocket picking
+23B,A,larceny/theft offenses,crimes against property,purse snatching
+23C,A,larceny/theft offenses,crimes against property,shoplifting
+23D,A,larceny/theft offenses,crimes against property,theft from building
+23E,A,larceny/theft offenses,crimes against property,theft from coin-operated machine/device
+23F,A,larceny/theft offenses,crimes against property,theft from motor vehicle
+23G,A,larceny/theft offenses,crimes against property,theft of motor vehicle parts/accessories
+23H,A,larceny/theft offenses,crimes against property,all other larceny
+240,A,motor vehicle theft,crimes against property,motor vehicle theft
+250,A,counterfeiting/forgery,crimes against property,counterfeiting/forgery
+26A,A,fraud offenses,crimes against property,false pretenses/swindle/confidence game
+26B,A,fraud offenses,crimes against property,credit card/automatic teller machine fraud
+26C,A,fraud offenses,crimes against property,impersonation
+26D,A,fraud offenses,crimes against property,welfare fraud
+26E,A,fraud offenses,crimes against property,wire fraud
+270,A,embezzlement,crimes against property,embezzlement
+280,A,stolen property offenses,crimes against property,stolen property offenses (receiving-selling-etc)
+290,A,destruction/damage/vandalism of property,crimes against property,destruction/damage/vandalism of property
+35A,A,drug/narcotic offenses,crimes against society,drug/narcotic violations
+35B,A,drug/narcotic offenses,crimes against society,drug equipment violations
+36A,A,sex offenses,crimes against persons,incest - nonforcible
+36B,A,sex offenses,crimes against persons,statutory rape - nonforcible
+370,A,pornography/obscene material,crimes against society,pornography/obscene material
+39A,A,gambling offenses,crimes against society,betting/wagering
+39B,A,gambling offenses,crimes against society,operating/promoting/assisting gambling
+39C,A,gambling offenses,crimes against society,gambling equipment violations
+39D,A,gambling offenses,crimes against society,sports tampering
+40A,A,prostitution offenses,crimes against society,prostitution
+40B,A,prostitution offenses,crimes against society,assisting or promoting prostitution
+510,A,bribery,crimes against property,bribery
+520,A,weapon law violations,crimes against society,weapon law violations
+90A,B,bad checks,crimes against property,bad checks
+90B,B,curfew/loitering/vagrancy violation,crimes against society,curfew/loitering/vagrancy violation
+90C,B,disorderly conduct,crimes against society,disorderly conduct
+90D,B,driving under the influence,crimes against society,driving under the influence
+90E,B,drunkenness,crimes against society,drunkenness
+90F,B,family offenses - nonviolent,crimes against society,family offenses - nonviolent
+90G,B,liquor law violations,crimes against society,liquor law violations
+90H,B,peeping tom,crimes against society,peeping tom
+90I,B,runaway,not a crime,runaway
+90J,B,trespass of real property,crimes against society,trespass of real property
+90Z,B,all other offenses,it depends,all other offenses

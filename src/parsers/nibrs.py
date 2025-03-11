@@ -176,7 +176,7 @@ class Segment01Parser:
             "total_arrestees": self.line[43:45],
             "city_submission": self.line[45:49],
             "ex_cleared": self.line[49:50],
-            "ex_cleared_date": self.line[50:58],
+            "ex_cleared_date": self.line[50:],
         }
 
 
@@ -187,6 +187,7 @@ class SegmentW1Parser(Segment01Parser):
 
     def unpack_w1_fields(self) -> dict:
         return {
+            "ex_cleared_date": self.line[50:58],
             "ucr_offense1": self.line[58:61],
             "ucr_offense2": self.line[61:64],
             "ucr_offense3": self.line[64:67],
@@ -196,7 +197,7 @@ class SegmentW1Parser(Segment01Parser):
             "ucr_offense7": self.line[76:79],
             "ucr_offense8": self.line[79:82],
             "ucr_offense9": self.line[82:85],
-            "ucr_offense10": self.line[85:88],
+            "ucr_offense10": self.line[85:],
         }
 
 
@@ -229,7 +230,7 @@ class Segment02Parser:
             "automatic_ind2": self.line[53:54],
             "weapon_or_force_type3": self.line[54:56],
             "automatic_ind3": self.line[56:57],
-            "bias_motivation": self.line[57:59],
+            "bias_motivation": self.line[57:],
         }
 
 
@@ -262,7 +263,7 @@ class Segment03Parser:
             "suspected_drug3": self.line[87:88],
             "suspected_drug3_qty": self.line[88:97],
             "suspected_drug3_qty_thous": self.line[97:100],
-            "suspected_drug3_qty_units": self.line[100:102],
+            "suspected_drug3_qty_units": self.line[100:],
         }
 
 
@@ -273,6 +274,7 @@ class SegmentW3Parser(Segment03Parser):
 
     def unpack_w3_fields(self) -> dict:
         return {
+            "suspected_drug3_qty_units": self.line[100:102],
             "ucr_offense1": self.line[102:105],
             "ucr_offense2": self.line[105:108],
             "ucr_offense3": self.line[108:111],
@@ -282,7 +284,7 @@ class SegmentW3Parser(Segment03Parser):
             "ucr_offense7": self.line[120:123],
             "ucr_offense8": self.line[123:126],
             "ucr_offense9": self.line[126:129],
-            "ucr_offense10": self.line[129:132],
+            "ucr_offense10": self.line[129:],
         }
 
 
@@ -342,7 +344,7 @@ class Segment04Parser:
             "offender_no_relation9": self.line[115:117],
             "victim_offender_relation9": self.line[117:119],
             "offender_no_relation10": self.line[119:121],
-            "victim_offender_relation10": self.line[121:123],
+            "victim_offender_relation10": self.line[121:],
         }
 
 
@@ -361,7 +363,7 @@ class Segment05Parser:
             "offender_seq_no": self.line[33:35],
             "offender_age": self.line[35:37],
             "offender_sex": self.line[37:38],
-            "offender_race": self.line[38:39],
+            "offender_race": self.line[38:],
         }
 
 
@@ -392,7 +394,7 @@ class Segment06Parser:
             "arrestee_race": self.line[69:70],
             "arrestee_ethnicity": self.line[70:71],
             "arrestee_residency": self.line[71:72],
-            "arrestee_under_18_disp": self.line[72:73],
+            "arrestee_under_18_disp": self.line[72:],
         }
 
 
@@ -403,6 +405,7 @@ class SegmentW6Parser(Segment06Parser):
 
     def unpack_w6_fields(self) -> dict:
         return {
+            "arrestee_under_18_disp": self.line[72:73],
             "window_clearance_flag": self.line[73:74],
             "ucr_offense1": self.line[74:77],
             "ucr_offense2": self.line[77:80],
@@ -413,7 +416,7 @@ class SegmentW6Parser(Segment06Parser):
             "ucr_offense7": self.line[92:95],
             "ucr_offense8": self.line[95:98],
             "ucr_offense9": self.line[98:101],
-            "ucr_offense10": self.line[101:104],
+            "ucr_offense10": self.line[101:],
         }
 
 
@@ -442,5 +445,5 @@ class Segment07Parser:
             "arrestee_race": self.line[52:53],
             "arrestee_ethnicity": self.line[53:54],
             "arrestee_residency": self.line[54:55],
-            "arrestee_under_18_disp": self.line[55:56],
+            "arrestee_under_18_disp": self.line[55:],
         }

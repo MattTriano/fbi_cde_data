@@ -1,0 +1,367 @@
+unit_tests:
+  - name: test_std_batch_header_stage
+    description: >
+      Testing out processing the unified batch_header segment.
+    model: std_batch_header
+    given:
+      - input: source('nibrs_raw', 'batch_header')
+        format: dict
+        rows:
+          - nibrs_year: 2013
+            segment: 'BH'
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: '            '
+            ori_added: '20140228'
+            ori_nibrs: '        '
+            city: 'CHICAGO                       '
+            state_abbr: 'IL'
+            pop_group: '1A'
+            division: '3'
+            region: '2'
+            agency_ind: '1'
+            core_city: 'Y'
+            covered_by_ori: '         '
+            fbi_field_office: '3150'
+            judicial_district: '125N'
+            nibrs_flag: ' '
+            inactive_date: '        '
+            city1_curr_pop: '002720554'
+            city1_code_ucr: '016'
+            city1_msa_code: '160'
+            city1_last_pop: '002708382'
+            city2_curr_pop: '000000000'
+            city2_code_ucr: '   '
+            city2_msa_code: '   '
+            city2_last_pop: '000000000'
+            city3_curr_pop: '000000000'
+            city3_code_ucr: '   '
+            city3_msa_code: '   '
+            city3_last_pop: '000000000'
+            city4_curr_pop: '000000000'
+            city4_code_ucr: '   '
+            city4_msa_code: '   '
+            city4_last_pop: '000000000'
+            city5_curr_pop: '000000000'
+            city5_code_ucr: '   '
+            city5_msa_code: '   '
+            city5_last_pop: '000000000'
+            ind_1_6_12: '  '
+            months_reported: '00'
+            master_year: '2013'
+            jan_zero_rpt: ' '
+            jan_a_or_b: ' '
+            jan_window: ' '
+            feb_zero_rpt: ' '
+            feb_a_or_b: ' '
+            feb_window: ' '
+            mar_zero_rpt: ' '
+            mar_a_or_b: ' '
+            mar_window: ' '
+            apr_zero_rpt: ' '
+            apr_a_or_b: ' '
+            apr_window: ' '
+            may_zero_rpt: ' '
+            may_a_or_b: ' '
+            may_window: ' '
+            jun_zero_rpt: ' '
+            jun_a_or_b: ' '
+            jun_window: ' '
+            jul_zero_rpt: ' '
+            jul_a_or_b: ' '
+            jul_window: ' '
+            aug_zero_rpt: ' '
+            aug_a_or_b: ' '
+            aug_window: ' '
+            sep_zero_rpt: ' '
+            sep_a_or_b: ' '
+            sep_window: ' '
+            oct_zero_rpt: ' '
+            oct_a_or_b: ' '
+            oct_window: ' '
+            nov_zero_rpt: ' '
+            nov_a_or_b: ' '
+            nov_window: ' '
+            dec_zero_rpt: ' '
+            dec_a_or_b: ' '
+            dec_window: ' '
+            cnty1_fips: '031'
+            cnty2_fips: '   '
+            cnty3_fips: '   '
+            cnty4_fips: '   '
+            cnty5_fips: '   '
+
+      - input: source('nibrs_raw', 'batch_header_p1')
+        format: dict
+        rows:
+          - nibrs_year: 1991
+            segment: 'B1'
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: '            '
+            ori_added: '19920326'
+            ori_nibrs: '        '
+            city: 'CHICAGO                       '
+            state_abbr: 'IL'
+            pop_group: '1A'
+            division: '3'
+            region: '2'
+            agency_ind: '1'
+            core_city: 'Y'
+            covered_by_ori: '         '
+            fbi_field_office: '3150'
+            judicial_district: '125N'
+            nibrs_flag: ' '
+            inactive_date: '        '
+
+      - input: source('nibrs_raw', 'batch_header_p2')
+        format: dict
+        rows:
+          - nibrs_year: 1991
+            segment: 'B1'
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: '            '
+            city1_curr_pop: '002811478'
+            city1_code_ucr: '016'
+            city1_msa_code: '161'
+            city1_last_pop: '002811478'
+            city2_curr_pop: '000000000'
+            city2_code_ucr: '   '
+            city2_msa_code: '   '
+            city2_last_pop: '000000000'
+            city3_curr_pop: '000000000'
+            city3_code_ucr: '   '
+            city3_msa_code: '   '
+            city3_last_pop: '000000000'
+            city4_curr_pop: '000000000'
+            city4_code_ucr: '   '
+            city4_msa_code: '   '
+            city4_last_pop: '000000000'
+
+      - input: source('nibrs_raw', 'batch_header_p3')
+        format: dict
+        rows:
+          - nibrs_year: 1991
+            segment: 'B1'
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: '            '
+            city5_curr_pop: '000000000'
+            city5_code_ucr: '   '
+            city5_msa_code: '   '
+            city5_last_pop: '000000000'
+            ind_1_6_12: '  '
+            months_reported: '00'
+            master_year: '1991'
+            jan_zero_rpt: ' '
+            jan_a_or_b: ' '
+            jan_window: ' '
+            feb_zero_rpt: ' '
+            feb_a_or_b: ' '
+            feb_window: ' '
+            mar_zero_rpt: ' '
+            mar_a_or_b: ' '
+            mar_window: ' '
+            apr_zero_rpt: ' '
+            apr_a_or_b: ' '
+            apr_window: ' '
+            may_zero_rpt: ' '
+            may_a_or_b: ' '
+            may_window: ' '
+            jun_zero_rpt: ' '
+            jun_a_or_b: ' '
+            jun_window: ' '
+            jul_zero_rpt: ' '
+            jul_a_or_b: ' '
+            jul_window: ' '
+            aug_zero_rpt: ' '
+            aug_a_or_b: ' '
+            aug_window: ' '
+            sep_zero_rpt: ' '
+            sep_a_or_b: ' '
+            sep_window: ' '
+            oct_zero_rpt: ' '
+            oct_a_or_b: ' '
+            oct_window: ' '
+            nov_zero_rpt: ' '
+            nov_a_or_b: ' '
+            nov_window: ' '
+            dec_zero_rpt: ' '
+            dec_a_or_b: ' '
+            dec_window: ' '
+            cnty1_fips: '031'
+            cnty2_fips: '   '
+            cnty3_fips: '   '
+            cnty4_fips: '   '
+            cnty5_fips: '   '
+
+    expect:
+      rows:
+        - nibrs_year: 2013
+          segment: 'BH'
+          state_code: '12'
+          ori: 'ILCPD0000'
+          incident_no: NULL
+          ori_added: '2014-02-28'
+          ori_started_nibrs: NULL
+          city: 'CHICAGO'
+          state_abbr: 'IL'
+          pop_group: '1A'
+          division: '3'
+          region: '2'
+          agency_ind: '1'
+          core_city: True
+          covered_by_ori: NULL
+          fbi_field_office: '3150'
+          judicial_district: '125N'
+          nibrs_flag: NULL
+          inactive_date: NULL
+          county1_curr_pop: 2720554
+          county1_code_ucr: '016'
+          county1_msa_code: '160'
+          county1_last_pop: 2708382
+          county2_curr_pop: NULL
+          county2_code_ucr: NULL
+          county2_msa_code: NULL
+          county2_last_pop: NULL
+          county3_curr_pop: NULL
+          county3_code_ucr: NULL
+          county3_msa_code: NULL
+          county3_last_pop: NULL
+          county4_curr_pop: NULL
+          county4_code_ucr: NULL
+          county4_msa_code: NULL
+          county4_last_pop: NULL
+          county5_curr_pop: NULL
+          county5_code_ucr: NULL
+          county5_msa_code: NULL
+          county5_last_pop: NULL
+          ind_1_6_12: ''
+          months_reported: 0
+          master_year: 2013
+          jan_zero_rpt: False
+          jan_a_or_b: False
+          jan_window: False
+          feb_zero_rpt: False
+          feb_a_or_b: False
+          feb_window: False
+          mar_zero_rpt: False
+          mar_a_or_b: False
+          mar_window: False
+          apr_zero_rpt: False
+          apr_a_or_b: False
+          apr_window: False
+          may_zero_rpt: False
+          may_a_or_b: False
+          may_window: False
+          jun_zero_rpt: False
+          jun_a_or_b: False
+          jun_window: False
+          jul_zero_rpt: False
+          jul_a_or_b: False
+          jul_window: False
+          aug_zero_rpt: False
+          aug_a_or_b: False
+          aug_window: False
+          sep_zero_rpt: False
+          sep_a_or_b: False
+          sep_window: False
+          oct_zero_rpt: False
+          oct_a_or_b: False
+          oct_window: False
+          nov_zero_rpt: False
+          nov_a_or_b: False
+          nov_window: False
+          dec_zero_rpt: False
+          dec_a_or_b: False
+          dec_window: False
+          county1_fips: '031'
+          county2_fips: NULL
+          county3_fips: NULL
+          county4_fips: NULL
+          county5_fips: NULL
+
+        - nibrs_year: 1991
+          segment: 'BH'
+          state_code: '12'
+          ori: 'ILCPD0000'
+          incident_no: NULL
+          ori_added: '1992-03-26'
+          ori_started_nibrs: NULL
+          city: 'CHICAGO'
+          state_abbr: 'IL'
+          pop_group: '1A'
+          division: '3'
+          region: '2'
+          agency_ind: '1'
+          core_city: True
+          covered_by_ori: NULL
+          fbi_field_office: '3150'
+          judicial_district: '125N'
+          nibrs_flag: NULL
+          inactive_date: NULL
+          county1_curr_pop: 2811478
+          county1_code_ucr: '016'
+          county1_msa_code: '161'
+          county1_last_pop: 2811478
+          county2_curr_pop: NULL
+          county2_code_ucr: NULL
+          county2_msa_code: NULL
+          county2_last_pop: NULL
+          county3_curr_pop: NULL
+          county3_code_ucr: NULL
+          county3_msa_code: NULL
+          county3_last_pop: NULL
+          county4_curr_pop: NULL
+          county4_code_ucr: NULL
+          county4_msa_code: NULL
+          county4_last_pop: NULL
+          county5_curr_pop: NULL
+          county5_code_ucr: NULL
+          county5_msa_code: NULL
+          county5_last_pop: NULL
+          ind_1_6_12: ''
+          months_reported: 0
+          master_year: 1991
+          jan_zero_rpt: False
+          jan_a_or_b: False
+          jan_window: False
+          feb_zero_rpt: False
+          feb_a_or_b: False
+          feb_window: False
+          mar_zero_rpt: False
+          mar_a_or_b: False
+          mar_window: False
+          apr_zero_rpt: False
+          apr_a_or_b: False
+          apr_window: False
+          may_zero_rpt: False
+          may_a_or_b: False
+          may_window: False
+          jun_zero_rpt: False
+          jun_a_or_b: False
+          jun_window: False
+          jul_zero_rpt: False
+          jul_a_or_b: False
+          jul_window: False
+          aug_zero_rpt: False
+          aug_a_or_b: False
+          aug_window: False
+          sep_zero_rpt: False
+          sep_a_or_b: False
+          sep_window: False
+          oct_zero_rpt: False
+          oct_a_or_b: False
+          oct_window: False
+          nov_zero_rpt: False
+          nov_a_or_b: False
+          nov_window: False
+          dec_zero_rpt: False
+          dec_a_or_b: False
+          dec_window: False
+          county1_fips: '031'
+          county2_fips: NULL
+          county3_fips: NULL
+          county4_fips: NULL
+          county5_fips: NULL

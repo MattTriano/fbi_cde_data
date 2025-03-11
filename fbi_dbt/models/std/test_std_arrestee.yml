@@ -1,0 +1,148 @@
+unit_tests:
+  - name: test_std_arrestee_stage
+    description: >
+      Testing out processing the unified arrestee segment.
+    model: std_arrestee
+    given:
+      - input: source('nibrs_raw', 'arrestee')
+        format: dict
+        rows:
+          - nibrs_year: 2021
+            segment: '06'
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: 'JE285512    '
+            incident_date: '20210701'
+            arrestee_seq_no: '01'
+            arrest_transaction_no: '30065061    '
+            arrest_date: '20210701'
+            arrest_type: 'T'
+            multi_arrestee_seg_ind: 'N'
+            ucr_arrest_offense_code: '290'
+            arrestee_weapon1: '01'
+            arrestee_weapon1_automatic: ' '
+            arrestee_weapon2: '  '
+            arrestee_weapon2_automatic: ' '
+            arrestee_age: '26'
+            arrestee_sex: 'M'
+            arrestee_race: 'B'
+            arrestee_ethnicity: 'N'
+            arrestee_residency: ' '
+            arrestee_under_18_disp: ' '
+
+          - nibrs_year: 1997
+            segment: '06'
+            state_code: '05'
+            ori: 'CO0010100'
+            incident_no: 'N -ZU6V4B0W5'
+            incident_date: '19970304'
+            arrestee_seq_no: '01'
+            arrest_transaction_no: '7L2 58Q-F39G'
+            arrest_date: '19970304'
+            arrest_type: 'O'
+            multi_arrestee_seg_ind: 'C'
+            ucr_arrest_offense_code: '520'
+            arrestee_weapon1: '12'
+            arrestee_weapon1_automatic: 'A'
+            arrestee_weapon2: '12'
+            arrestee_weapon2_automatic: ' '
+            arrestee_age: '15'
+            arrestee_sex: 'M'
+            arrestee_race: 'B'
+            arrestee_ethnicity: 'N'
+            arrestee_residency: 'R'
+            arrestee_under_18_disp: 'R'
+
+          - nibrs_year: 2011
+            segment: '06'
+            state_code: '03'
+            ori: 'AR0050100'
+            incident_no: '72-IYBK6IL72'
+            incident_date: '20110102'
+            arrestee_seq_no: '02'
+            arrest_transaction_no: '1A-QPU707D1A'
+            arrest_date: '20110102'
+            arrest_type: 'O'
+            multi_arrestee_seg_ind: 'N'
+            ucr_arrest_offense_code: '35A'
+            arrestee_weapon1: '11'
+            arrestee_weapon1_automatic: ' '
+            arrestee_weapon2: '12'
+            arrestee_weapon2_automatic: 'A'
+            arrestee_age: '26'
+            arrestee_sex: 'M'
+            arrestee_race: 'W'
+            arrestee_ethnicity: 'N'
+            arrestee_residency: 'R'
+            arrestee_under_18_disp: "{{ '\n' }}"
+
+    expect:
+      rows:
+        - nibrs_year: 2021
+          segment: '06'
+          state_code: '12'
+          ori: 'ILCPD0000'
+          incident_no: 'JE285512'
+          incident_date: '2021-07-01'
+          arrestee_seq_no: 1
+          arrest_transaction_no: '30065061'
+          arrest_date: '2021-07-01'
+          arrest_type: 'T'
+          multi_arrestee_seg_ind: 'N'
+          ucr_arrest_offense_code: '290'
+          arrestee_weapon1: '01'
+          arrestee_weapon1_automatic: NULL
+          arrestee_weapon2: NULL
+          arrestee_weapon2_automatic: NULL
+          arrestee_age: '26'
+          arrestee_sex: 'M'
+          arrestee_race: 'B'
+          arrestee_ethnicity: 'N'
+          arrestee_residency: NULL
+          arrestee_under_18_disp: NULL
+
+        - nibrs_year: 1997
+          segment: '06'
+          state_code: '05'
+          ori: 'CO0010100'
+          incident_no: 'N -ZU6V4B0W5'
+          incident_date: '1997-03-04'
+          arrestee_seq_no: 1
+          arrest_transaction_no: '7L258Q-F39G'
+          arrest_date: '1997-03-04'
+          arrest_type: 'O'
+          multi_arrestee_seg_ind: 'C'
+          ucr_arrest_offense_code: '520'
+          arrestee_weapon1: '12'
+          arrestee_weapon1_automatic: 'A'
+          arrestee_weapon2: '12'
+          arrestee_weapon2_automatic: NULL
+          arrestee_age: '15'
+          arrestee_sex: 'M'
+          arrestee_race: 'B'
+          arrestee_ethnicity: 'N'
+          arrestee_residency: 'R'
+          arrestee_under_18_disp: 'R'
+
+        - nibrs_year: 2011
+          segment: '06'
+          state_code: '03'
+          ori: 'AR0050100'
+          incident_no: '72-IYBK6IL72'
+          incident_date: '2011-01-02'
+          arrestee_seq_no: 2
+          arrest_transaction_no: '1A-QPU707D1A'
+          arrest_date: '2011-01-02'
+          arrest_type: 'O'
+          multi_arrestee_seg_ind: 'N'
+          ucr_arrest_offense_code: '35A'
+          arrestee_weapon1: '11'
+          arrestee_weapon1_automatic: NULL
+          arrestee_weapon2: '12'
+          arrestee_weapon2_automatic: 'A'
+          arrestee_age: '26'
+          arrestee_sex: 'M'
+          arrestee_race: 'W'
+          arrestee_ethnicity: 'N'
+          arrestee_residency: 'R'
+          arrestee_under_18_disp: NULL

@@ -1,0 +1,108 @@
+unit_tests:
+  - name: test_std_admitistrative_stage
+    description: >
+      Testing out processing
+      the administrative segment.
+    model: std_administrative
+    given:
+      - input: source('nibrs_raw', 'administrative')
+        format: dict
+        rows:
+          - nibrs_year: 2015
+            segment: '01'
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: 'JE272442    '
+            incident_date: '20210619'
+            report_date_ind: ' '
+            incident_hour: '09'
+            total_offenses: '03'
+            total_victims: '002'
+            total_offenders: '01'
+            total_arrestees: '00'
+            city_submission: '    '
+            ex_cleared: 'N'
+            ex_cleared_date: '        '
+
+          - nibrs_year: 2004
+            segment: '01'
+            state_code: '10'
+            ori: 'GA0670700'
+            incident_no: 'CI0QRVSQ72 N'
+            incident_date: '20040101'
+            report_date_ind: ' '
+            incident_hour: '06'
+            total_offenses: '01'
+            total_victims: '001'
+            total_offenders: '01'
+            total_arrestees: '00'
+            city_submission: 'GAA1'
+            ex_cleared: 'N'
+            ex_cleared_date: '        '
+
+          - nibrs_year: 2021
+            segment: '01'
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: 'JE271631    '
+            incident_date: '20210616'
+            report_date_ind: ' '
+            incident_hour: '00'
+            total_offenses: '01'
+            total_victims: '001'
+            total_offenders: '01'
+            total_arrestees: '00'
+            city_submission: '    '
+            ex_cleared: 'D'
+            ex_cleared_date: '20210704'
+
+
+    expect:
+      rows:
+        - nibrs_year: 2015
+          segment: '01'
+          state_code: '12'
+          ori: 'ILCPD0000'
+          incident_no: 'JE272442'
+          incident_date: '2021-06-19'
+          report_date_ind: NULL
+          incident_hour: 9
+          total_offenses: 3
+          total_victims: 2
+          total_offenders: 1
+          total_arrestees: 0
+          city_submission: NULL
+          ex_cleared: 'N'
+          ex_cleared_date: NULL
+
+        - nibrs_year: 2004
+          segment: '01'
+          state_code: '10'
+          ori: 'GA0670700'
+          incident_no: 'CI0QRVSQ72 N'
+          incident_date: '2004-01-01'
+          report_date_ind: NULL
+          incident_hour: 6
+          total_offenses: 1
+          total_victims: 1
+          total_offenders: 1
+          total_arrestees: 0
+          city_submission: 'GAA1'
+          ex_cleared: 'N'
+          ex_cleared_date: NULL
+
+        - nibrs_year: 2021
+          segment: '01'
+          state_code: '12'
+          ori: 'ILCPD0000'
+          incident_no: 'JE271631'
+          incident_date: '2021-06-16'
+          report_date_ind: NULL
+          incident_hour: 0
+          total_offenses: 1
+          total_victims: 1
+          total_offenders: 1
+          total_arrestees: 0
+          city_submission: NULL
+          ex_cleared: 'D'
+          ex_cleared_date: '2021-07-04'

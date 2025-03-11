@@ -1,0 +1,150 @@
+unit_tests:
+  - name: test_std_window_property_stage
+    description: >
+      Testing out processing the unified window_property segment.
+    model: std_window_property
+    given:
+      - input: source('nibrs_raw', 'window_property')
+        format: dict
+        rows:
+          - nibrs_year: 2012
+            segment: 'W3'
+            state_code: '02'
+            ori: 'AZ0071100'
+            incident_no: '8404KOPLSV8G'
+            incident_date: '        '
+            property_loss_type: '5'
+            property_descr: '13'
+            property_value: '000000425'
+            date_recovered: '20120105'
+            motor_vehicles_stolen: '  '
+            motor_vehicles_recovered: '  '
+            suspected_drug1: ' '
+            suspected_drug1_qty: '         '
+            suspected_drug1_qty_thous: '   '
+            suspected_drug1_qty_units: '  '
+            suspected_drug2: ' '
+            suspected_drug2_qty: '         '
+            suspected_drug2_qty_thous: '   '
+            suspected_drug2_qty_units: '  '
+            suspected_drug3: ' '
+            suspected_drug3_qty: '         '
+            suspected_drug3_qty_thous: '   '
+            suspected_drug3_qty_units: '  '
+            ucr_offense1: '23D'
+            ucr_offense2: "{{ '\n' }}"
+            ucr_offense3: ''
+            ucr_offense4: ''
+            ucr_offense5: ''
+            ucr_offense6: ''
+            ucr_offense7: ''
+            ucr_offense8: ''
+            ucr_offense9: ''
+            ucr_offense10: ''
+
+          - nibrs_year: 2009
+            segment: 'W3'
+            state_code: '02'
+            ori: 'AZ0071100'
+            incident_no: '7V0NJ45HRK73'
+            incident_date: '        '
+            property_loss_type: '5'
+            property_descr: '24'
+            property_value: '000008400'
+            date_recovered: '20090925'
+            motor_vehicles_stolen: '  '
+            motor_vehicles_recovered: '02'
+            suspected_drug1: ' '
+            suspected_drug1_qty: '         '
+            suspected_drug1_qty_thous: '   '
+            suspected_drug1_qty_units: '  '
+            suspected_drug2: ' '
+            suspected_drug2_qty: '         '
+            suspected_drug2_qty_thous: '   '
+            suspected_drug2_qty_units: '  '
+            suspected_drug3: ' '
+            suspected_drug3_qty: '         '
+            suspected_drug3_qty_thous: '   '
+            suspected_drug3_qty_units: '  '
+            ucr_offense1: '240'
+            ucr_offense2: "{{ '\n' }}"
+            ucr_offense3: ''
+            ucr_offense4: ''
+            ucr_offense5: ''
+            ucr_offense6: ''
+            ucr_offense7: ''
+            ucr_offense8: ''
+            ucr_offense9: ''
+            ucr_offense10: ''
+
+    expect:
+      rows:
+        - nibrs_year: 2012
+          segment: 'W3'
+          state_code: '02'
+          ori: 'AZ0071100'
+          incident_no: '8404KOPLSV8G'
+          incident_date: NULL
+          property_loss_type: '5'
+          property_descr: '13'
+          property_value: 425
+          date_recovered: '2012-01-05'
+          motor_vehicles_stolen: NULL
+          motor_vehicles_recovered: NULL
+          suspected_drug1: NULL
+          suspected_drug1_qty: NULL
+          suspected_drug1_qty_thous: NULL
+          suspected_drug1_qty_units: NULL
+          suspected_drug2: NULL
+          suspected_drug2_qty: NULL
+          suspected_drug2_qty_thous: NULL
+          suspected_drug2_qty_units: NULL
+          suspected_drug3: NULL
+          suspected_drug3_qty: NULL
+          suspected_drug3_qty_thous: NULL
+          suspected_drug3_qty_units: NULL
+          ucr_offense1: '23D'
+          ucr_offense2: NULL
+          ucr_offense3: NULL
+          ucr_offense4: NULL
+          ucr_offense5: NULL
+          ucr_offense6: NULL
+          ucr_offense7: NULL
+          ucr_offense8: NULL
+          ucr_offense9: NULL
+          ucr_offense10: NULL
+
+        - nibrs_year: 2009
+          segment: 'W3'
+          state_code: '02'
+          ori: 'AZ0071100'
+          incident_no: '7V0NJ45HRK73'
+          incident_date: NULL
+          property_loss_type: '5'
+          property_descr: '24'
+          property_value: 8400
+          date_recovered: '2009-09-25'
+          motor_vehicles_stolen: NULL
+          motor_vehicles_recovered: 2
+          suspected_drug1: NULL
+          suspected_drug1_qty: NULL
+          suspected_drug1_qty_thous: NULL
+          suspected_drug1_qty_units: NULL
+          suspected_drug2: NULL
+          suspected_drug2_qty: NULL
+          suspected_drug2_qty_thous: NULL
+          suspected_drug2_qty_units: NULL
+          suspected_drug3: NULL
+          suspected_drug3_qty: NULL
+          suspected_drug3_qty_thous: NULL
+          suspected_drug3_qty_units: NULL
+          ucr_offense1: '240'
+          ucr_offense2: NULL
+          ucr_offense3: NULL
+          ucr_offense4: NULL
+          ucr_offense5: NULL
+          ucr_offense6: NULL
+          ucr_offense7: NULL
+          ucr_offense8: NULL
+          ucr_offense9: NULL
+          ucr_offense10: NULL

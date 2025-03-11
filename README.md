@@ -30,6 +30,30 @@ You can also run the API pipeline by adding on the `--run_api_pipeline` flag. At
 uv run python src/elt.py --run_api_pipeline
 ```
 
+### dbt commands
+First, navigate into the `<project_root>/fbi_dbt/` dir (required for commands to work).
+
+To install dbt packages:
+```console
+uv run dbt deps
+```
+
+To run dbt data tests:
+```console
+uv run dbt test
+```
+
+To run dbt unit_tests:
+```console
+uv run dbt test --select test_type:unit
+```
+
+To compile and materialize views or tables into the prod database:
+```console
+uv run dbt run --target prod
+```
+Note: this pipeline currently doesn't create a dev database as raw nibrs data alone is 20GB and this isn't a prod system yet.
+
 ### Query interface
 
 Run this command to open the Streamlit database querying interface. The console output will include three URLs, click the one that's appropriate for your situation (or try all three if you're unsure).
