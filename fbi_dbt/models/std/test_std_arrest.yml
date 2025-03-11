@@ -1,0 +1,94 @@
+unit_tests:
+  - name: test_std_arrest_stage
+    description: >
+      Testing out processing the unified arrest segment.
+    model: std_arrest
+    given:
+      - input: source('nibrs_raw', 'arrest')
+        format: dict
+        rows:
+          - nibrs_year: 2021
+            segment: '07'
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: '30065144    '
+            arrest_date: '20210701'
+            arrestee_seq_no: '01'
+            city_submission: '    '
+            arrest_type: 'T'
+            ucr_offense: '90Z'
+            arrestee_weapon1: '01'
+            arrestee_weapon1_automatic: ' '
+            arrestee_weapon2: ' '
+            arrestee_weapon2_automatic: '  '
+            arrestee_age: '41'
+            arrestee_sex: 'M'
+            arrestee_race: 'B'
+            arrestee_ethnicity: 'N'
+            arrestee_residency: 'N'
+            arrestee_under_18_disp: ' '
+
+          - nibrs_year: 2002
+            segment: '07'
+            state_code: '03'
+            ori: 'AR0600400'
+            incident_no: 'CI24- PU728N'
+            arrest_date: '20020118'
+            arrestee_seq_no: '01'
+            city_submission: '    '
+            arrest_type: 'T'
+            ucr_offense: '90B'
+            arrestee_weapon1: '01'
+            arrestee_weapon1_automatic: ' '
+            arrestee_weapon2: ' '
+            arrestee_weapon2_automatic: '  '
+            arrestee_age: '17'
+            arrestee_sex: 'M'
+            arrestee_race: 'W'
+            arrestee_ethnicity: 'N'
+            arrestee_residency: 'R'
+            arrestee_under_18_disp: 'H'
+
+    expect:
+      rows:
+        - nibrs_year: 2021
+          segment: '07'
+          state_code: '12'
+          ori: 'ILCPD0000'
+          incident_no: '30065144'
+          arrest_date: '2021-07-01'
+          arrestee_seq_no: 1
+          city_submission: NULL
+          arrest_type: 'T'
+          ucr_offense: '90Z'
+          arrestee_weapon1: '01'
+          arrestee_weapon1_automatic: NULL
+          arrestee_weapon2: NULL
+          arrestee_weapon2_automatic: NULL
+          arrestee_age: '41'
+          arrestee_sex: 'M'
+          arrestee_race: 'B'
+          arrestee_ethnicity: 'N'
+          arrestee_residency: 'N'
+          arrestee_under_18_disp: NULL
+
+        - nibrs_year: 2002
+          segment: '07'
+          state_code: '03'
+          ori: 'AR0600400'
+          incident_no: 'CI24- PU728N'
+          arrest_date: 2002-01-18 00:00:00
+          arrestee_seq_no: 1
+          city_submission: NULL
+          arrest_type: 'T'
+          ucr_offense: '90B'
+          arrestee_weapon1: '01'
+          arrestee_weapon1_automatic: NULL
+          arrestee_weapon2: NULL
+          arrestee_weapon2_automatic: NULL
+          arrestee_age: '17'
+          arrestee_sex: 'M'
+          arrestee_race: 'W'
+          arrestee_ethnicity: 'N'
+          arrestee_residency: 'R'
+          arrestee_under_18_disp: 'H'

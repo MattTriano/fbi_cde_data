@@ -1,5 +1,5 @@
 unit_tests:
-  - name: test_std_property_stage
+  - name: test_std_victim_stage
     description: >
       Testing out processing the unified victim segment.
     model: std_victim

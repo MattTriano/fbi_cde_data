@@ -38,9 +38,14 @@ To install dbt packages:
 uv run dbt deps
 ```
 
-To run dbt tests:
+To run dbt data tests:
 ```console
 uv run dbt test
+```
+
+To run dbt unit_tests:
+```console
+uv run dbt test --select test_type:unit
 ```
 
 To compile and materialize views or tables into the prod database:

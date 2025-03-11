@@ -8,7 +8,7 @@ with arrest_seg as (
         trim(ori)                                                 as ori,
         trim(incident_no)                                         as incident_no,
         {{ parse_nibrs_date('arrest_date') }}                     as arrest_date,
-        {{ trim_and_stdize_nulls('arrestee_seq_no') }}            as arrestee_seq_no,
+        {{ trim_and_stdize_nulls('arrestee_seq_no') }}::smallint  as arrestee_seq_no,
         {{ trim_and_stdize_nulls('city_submission') }}            as city_submission,
         {{ trim_and_stdize_nulls('arrest_type') }}                as arrest_type,
         {{ trim_and_stdize_nulls('ucr_offense') }}                as ucr_offense,
