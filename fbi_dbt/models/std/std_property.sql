@@ -10,7 +10,6 @@ with property_seg as (
         {{ parse_nibrs_date('incident_date') }}                            as incident_date,
         {{ trim_and_stdize_nulls('property_loss_type') }}                  as property_loss_type,
         {{ trim_and_stdize_nulls('property_descr') }}                      as property_descr,
-        {{ trim_and_stdize_nulls('property_descr') }}                      as property_descr,
         {{ trim_and_stdize_nulls('property_value', '[\s\n#]') }}::integer  as property_value,
         {{ parse_nibrs_date('date_recovered') }}                           as date_recovered,
         {{ trim_and_stdize_nulls('motor_vehicles_stolen') }}::smallint     as motor_vehicles_stolen,
