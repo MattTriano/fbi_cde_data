@@ -1,0 +1,79 @@
+unit_tests:
+  - name: test_std_window_arrestee_stage
+    description: >
+      Testing out processing the unified window_arrestee segment.
+    model: std_window_arrestee
+    given:
+      - input: source('nibrs_raw', 'window_arrestee')
+        format: dict
+        rows:
+          - nibrs_year: 2010
+            segment: 'W6'
+            state_code: '01'
+            ori: 'AL0011200'
+            incident_no: 'Z8064KOBRO2L'
+            incident_date: '        '
+            arrestee_seq_no: '01'
+            arrest_transaction_no: 'VX0XYBRV3M6X'
+            arrest_date: '20100215'
+            arrest_type: 'T'
+            multi_arrestee_seg_ind: 'N'
+            ucr_arrest_offense_code: '220'
+            arrestee_weapon1: '01'
+            arrestee_weapon1_automatic: ' '
+            arrestee_weapon2: '  '
+            arrestee_weapon2_automatic: ' '
+            arrestee_age: '29'
+            arrestee_sex: 'M'
+            arrestee_race: 'W'
+            arrestee_ethnicity: 'H'
+            arrestee_residency: 'N'
+            arrestee_under_18_disp: ' '
+            window_clearance_flag: 'N'
+            ucr_offense1: '220'
+            ucr_offense2: "{{ '\n' }}"
+            ucr_offense3: ''
+            ucr_offense4: ''
+            ucr_offense5: ''
+            ucr_offense6: ''
+            ucr_offense7: ''
+            ucr_offense8: ''
+            ucr_offense9: ''
+            ucr_offense10: ''
+
+    expect:
+      rows:
+        - nibrs_year: 2010
+          segment: 'W6'
+          state_code: '01'
+          ori: 'AL0011200'
+          incident_no: 'Z8064KOBRO2L'
+          incident_date: NULL
+          arrestee_seq_no: 1
+          arrest_transaction_no: 'VX0XYBRV3M6X'
+          arrest_date: '2010-02-15'
+          arrest_type: 'T'
+          multi_arrestee_seg_ind: 'N'
+          ucr_arrest_offense_code: '220'
+          arrestee_weapon1: '01'
+          arrestee_weapon1_automatic: NULL
+          arrestee_weapon2: NULL
+          arrestee_weapon2_automatic: NULL
+          arrestee_age: '29'
+          arrestee_ethnicity: 'H'
+          arrestee_sex: 'M'
+          arrestee_race: 'W'
+          arrestee_residency: 'N'
+          arrestee_under_18_disp: NULL
+          window_clearance_flag: 'N'
+          ucr_offense1: '220'
+          ucr_offense2: NULL
+          ucr_offense3: NULL
+          ucr_offense4: NULL
+          ucr_offense5: NULL
+          ucr_offense6: NULL
+          ucr_offense7: NULL
+          ucr_offense8: NULL
+          ucr_offense9: NULL
+          ucr_offense10: NULL
+

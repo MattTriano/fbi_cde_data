@@ -1,0 +1,114 @@
+unit_tests:
+  - name: test_std_window_ex_clear_stage
+    description: >
+      Testing out processing the unified window_ex_clear segment.
+    model: std_window_ex_clear
+    given:
+      - input: source('nibrs_raw', 'window_ex_clear')
+        format: dict
+        rows:
+          - nibrs_year: 1991
+            segment: 'W1'
+            state_code: '01'
+            ori: 'AL0290000'
+            incident_no: 'UKMIZJRMSR5H'
+            incident_date: '19901231'
+            report_date_ind: ' '
+            incident_hour: '12'
+            total_offenses: '00'
+            total_victims: '000'
+            total_offenders: '00'
+            total_arrestees: '00'
+            city_submission: '    '
+            ex_cleared: 'D'
+            ex_cleared_date: '19911203'
+            ucr_offense1: '23H'
+            ucr_offense2: '   '
+            ucr_offense3: '   '
+            ucr_offense4: '   '
+            ucr_offense5: '   '
+            ucr_offense6: '   '
+            ucr_offense7: '   '
+            ucr_offense8: '   '
+            ucr_offense9: '   '
+            ucr_offense10: '   '
+
+          - nibrs_year: 2016
+            segment: 'W1'
+            state_code: '03'
+            ori: 'AR0040000'
+            incident_no: '7S-ND6R6ZR72'
+            incident_date: '20121224'
+            report_date_ind: 'R'
+            incident_hour: '  '
+            total_offenses: '00'
+            total_victims: '000'
+            total_offenders: '00'
+            total_arrestees: '00'
+            city_submission: '    '
+            ex_cleared: 'B'
+            ex_cleared_date: '20160601'
+            ucr_offense1: '09A'
+            ucr_offense2: '   '
+            ucr_offense3: '   '
+            ucr_offense4: '   '
+            ucr_offense5: '   '
+            ucr_offense6: '   '
+            ucr_offense7: '   '
+            ucr_offense8: '   '
+            ucr_offense9: '   '
+            ucr_offense10: '   '
+
+    expect:
+      rows:
+        - nibrs_year: 1991
+          segment: 'W1'
+          state_code: '01'
+          ori: 'AL0290000'
+          incident_no: 'UKMIZJRMSR5H'
+          incident_date: '1990-12-31'
+          report_date_ind: NULL
+          incident_hour: 12
+          total_offenses: '00'
+          total_victims: '000'
+          total_offenders: '00'
+          total_arrestees: '00'
+          city_submission: NULL
+          ex_cleared: 'D'
+          ex_cleared_date: '1991-12-03'
+          ucr_offense1: '23H'
+          ucr_offense2: NULL
+          ucr_offense3: NULL
+          ucr_offense4: NULL
+          ucr_offense5: NULL
+          ucr_offense6: NULL
+          ucr_offense7: NULL
+          ucr_offense8: NULL
+          ucr_offense9: NULL
+          ucr_offense10: NULL
+
+        - nibrs_year: 2016
+          segment: 'W1'
+          state_code: '03'
+          ori: 'AR0040000'
+          incident_no: '7S-ND6R6ZR72'
+          incident_date: '2012-12-24'
+          report_date_ind: 'R'
+          incident_hour: NULL
+          total_offenses: '00'
+          total_victims: '000'
+          total_offenders: '00'
+          total_arrestees: '00'
+          city_submission: NULL
+          ex_cleared: 'B'
+          ex_cleared_date: '2016-06-01'
+          ucr_offense1: '09A'
+          ucr_offense2: NULL
+          ucr_offense3: NULL
+          ucr_offense4: NULL
+          ucr_offense5: NULL
+          ucr_offense6: NULL
+          ucr_offense7: NULL
+          ucr_offense8: NULL
+          ucr_offense9: NULL
+          ucr_offense10: NULL
