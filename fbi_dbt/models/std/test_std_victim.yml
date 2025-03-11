@@ -1,0 +1,115 @@
+unit_tests:
+  - name: test_std_property_stage
+    description: >
+      Testing out processing the unified victim segment.
+    model: std_victim
+    given:
+      - input: source('nibrs_raw', 'victim')
+        format: dict
+        rows:
+          - nibrs_year: 2021
+            segment: '04'
+            state_code: '12'
+            ori: 'ILCPD0000'
+            incident_no: 'JE271631    '
+            incident_date: '20210616'
+            victim_seq_no: '001'
+            victim_of_ucr_offense1: '13C'
+            victim_of_ucr_offense2: '   '
+            victim_of_ucr_offense3: '   '
+            victim_of_ucr_offense4: '   '
+            victim_of_ucr_offense5: '   '
+            victim_of_ucr_offense6: '   '
+            victim_of_ucr_offense7: '   '
+            victim_of_ucr_offense8: '   '
+            victim_of_ucr_offense9: '   '
+            victim_of_ucr_offense10: '   '
+            victim_type: 'I'
+            victim_age: '47'
+            victim_sex: 'F'
+            victim_race: 'B'
+            victim_ethnicity: 'N'
+            victim_resident_status: 'R'
+            agg_aslt_hom_circumstances1: '  '
+            agg_aslt_hom_circumstances2: '  '
+            justifiable_hom_circumstances: ' '
+            victim_injury1_type: ' '
+            victim_injury2_type: ' '
+            victim_injury3_type: ' '
+            victim_injury4_type: ' '
+            victim_injury5_type: ' '
+            offender_no_relation1: '01'
+            victim_offender_relation1: 'SE'
+            offender_no_relation2: '  '
+            victim_offender_relation2: '  '
+            offender_no_relation3: '  '
+            victim_offender_relation3: '  '
+            offender_no_relation4: '  '
+            victim_offender_relation4: '  '
+            offender_no_relation5: '  '
+            victim_offender_relation5: '  '
+            offender_no_relation6: '  '
+            victim_offender_relation6: '  '
+            offender_no_relation7: '  '
+            victim_offender_relation7: '  '
+            offender_no_relation8: '  '
+            victim_offender_relation8: '  '
+            offender_no_relation9: '  '
+            victim_offender_relation9: '  '
+            offender_no_relation10: '  '
+            victim_offender_relation10: '  '
+
+
+    expect:
+      rows:
+        - nibrs_year: 2021
+          segment: '04'
+          state_code: '12'
+          ori: 'ILCPD0000'
+          incident_no: 'JE271631'
+          incident_date: '2021-06-16'
+          victim_seq_no: 1
+          victim_of_ucr_offense1: '13C'
+          victim_of_ucr_offense2: NULL
+          victim_of_ucr_offense3: NULL
+          victim_of_ucr_offense4: NULL
+          victim_of_ucr_offense5: NULL
+          victim_of_ucr_offense6: NULL
+          victim_of_ucr_offense7: NULL
+          victim_of_ucr_offense8: NULL
+          victim_of_ucr_offense9: NULL
+          victim_of_ucr_offense10: NULL
+          victim_type: 'I'
+          victim_age: '47'
+          victim_sex: 'F'
+          victim_race: 'B'
+          victim_ethnicity: 'N'
+          victim_resident_status: 'R'
+          agg_aslt_hom_circumstances1: NULL
+          agg_aslt_hom_circumstances2: NULL
+          justifiable_hom_circumstances: NULL
+          victim_injury1_type: NULL
+          victim_injury2_type: NULL
+          victim_injury3_type: NULL
+          victim_injury4_type: NULL
+          victim_injury5_type: NULL
+          offender_no_relation1: '01'
+          victim_offender_relation1: 'SE'
+          offender_no_relation2: NULL
+          victim_offender_relation2: NULL
+          offender_no_relation3: NULL
+          victim_offender_relation3: NULL
+          offender_no_relation4: NULL
+          victim_offender_relation4: NULL
+          offender_no_relation5: NULL
+          victim_offender_relation5: NULL
+          offender_no_relation6: NULL
+          victim_offender_relation6: NULL
+          offender_no_relation7: NULL
+          victim_offender_relation7: NULL
+          offender_no_relation8: NULL
+          victim_offender_relation8: NULL
+          offender_no_relation9: NULL
+          victim_offender_relation9: NULL
+          offender_no_relation10: NULL
+          victim_offender_relation10: NULL
