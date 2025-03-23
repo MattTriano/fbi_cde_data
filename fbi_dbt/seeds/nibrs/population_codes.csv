@@ -1,0 +1,23 @@
+code,description
+0,Possessions
+1,All cities 250K or over
+1A,Cities 1M or over
+1B,Cities from 500K thru 999999
+1C,Cities from 250K thru 499999
+2,Cities from 100K thru 249999
+3,Cities from 50K thru 99999
+4,Cities from 25K thru 49999
+5,Cities from 10K thru 24999
+6,Cities from 2500 thru 9999
+7,Cities under 2500
+8,Non-MSA Counties
+8A,Non-MSA Counties 100K or over
+8B,Non-MSA Counties from 25K thru 99999
+8C,Non-MSA Counties from 10K thru 24999
+8D,Non-MSA Counties under 10K
+9,MSA Counties
+9A,MSA Counties 100K or over
+9B,MSA Counties from 25K thru 99999
+9C,MSA Counties from 10K thru 24999
+9D,MSA Counties under 10K
+9E,MSA State Police
